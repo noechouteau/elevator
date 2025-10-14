@@ -1,58 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
+<head
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/style.css">
   <title>Arcade – Highscores</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 300px;
-      text-align: center;
-    }
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #444;
-    }
-    tr:nth-child(even) {
-      background-color: #1a1a1a;
-    }
-    button {
-      margin-top: 20px;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 5px;
-      background: #03a9f4;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0288d1;
-    }
-  </style>
 </head>
 <body>
-  <h1>🏆 Highscores – Space Runner</h1>
+  <!-- <h1>🏆 Highscores – Space Runner</h1> -->
 
-  <div id="allContainer" style="display: flex; flex-direction: column; align-items: center;">
+  <div id="allContainer">
     <div id="imageAndButtons">
-      <Image src="/0001.png" alt="Elevator"/>
+      <Image src="/0001.png" class="background" alt="Elevator"/>
     </div>
   </div>
-  
+<!--   
   <table id="scoreTable">
     <thead>
       <tr>
@@ -64,7 +26,7 @@
     <tbody></tbody>
   </table>
 
-  <button id="addScoreBtn">Ajouter un score aléatoire</button>
+  <button id="addScoreBtn">Ajouter un score aléatoire</button> -->
 
     <script type="module" src="/src/main.js"></script>
 </body>
