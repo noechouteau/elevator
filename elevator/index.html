@@ -11,22 +11,38 @@
 
   <div id="allContainer">
     <div id="imageAndButtons">
+      <Video id="openingVideo" src="/opening.mp4" class="background" muted style="z-index: -5;"></Video>
       <Image src="/0001.png" class="background" alt="Elevator"/>
     </div>
   </div>
-<!--   
-  <table id="scoreTable">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Joueur</th>
-        <th>Score</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  
+  <div id="container">
+    <div id="scoreContainer">
+      <h2 id="gameTitle">🏆 Highscores – Elevator</h2>
+        <table id="scoreTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Joueur</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+    </div>
+  </div>
 
-  <button id="addScoreBtn">Ajouter un score aléatoire</button> -->
+  <div id="right-container">
+    <div id="floorsButtons">
+        <button id="addScoreBtn">Ajouter un score aléatoire</button>
+        <button id="jeu1bouton">Jeu 1</button>
+        <button id="jeu2bouton">Jeu 2</button>
+        <button id="jeu3bouton">Jeu 3</button>
+        <button id="jeu4bouton">Jeu 4</button>
+        <button id="jeu5bouton">Jeu 5</button>
+        <button id="jeu6bouton">Jeu 6</button>
+    </div>
+  </div>
 
     <script type="module" src="/src/main.js"></script>
 </body>

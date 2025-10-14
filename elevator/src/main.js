@@ -63,8 +63,22 @@ document.getElementById("addScoreBtn").addEventListener("click", () => {
   console.log("Ajout d’un score aléatoire...");
   const randomScore = Math.floor(Math.random() * 10000);
   const randomPlayer = "Player" + Math.floor(Math.random() * 100);
-  addScore(0, randomPlayer, randomScore);
+  const randomGameId = Math.floor(Math.random() * 6); // 0 à 5
+  addScore(randomGameId, randomPlayer, randomScore);
 });
+
+for(let i=1;i<=6;i++){
+  document.getElementById("jeu"+i+"bouton")
+  .addEventListener("mouseover",()=>{
+    loadScores(i-1);
+  });
+  document.getElementById("jeu"+i+"bouton")
+  .addEventListener("click",()=>{
+  document.getElementById("container").style.display="none";
+  document.getElementById("openingVideo").style.zIndex="10";
+  document.getElementById("openingVideo").play();
+  });
+}
 
 
 
