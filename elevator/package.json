@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "vite": "^7.1.7"
+  },
+  "dependencies": {
+    "axis-api": "github:gobelins-axis/axis-api"
   }
 }

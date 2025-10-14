@@ -1,4 +1,5 @@
 import { db } from "./firebase.js";
+import Axis from "axis-api";
 import {
   collection,
   addDoc,
@@ -21,6 +22,17 @@ async function addScore(gameId, playerName, score) {
   console.log(`✅ Score ajouté pour ${playerName} (${score})`);
   loadScores(gameId); // recharge le classement
 }
+
+const images = [
+  "/game1.jpg",
+  "/game2.jpg",
+  "/game3.jpg",
+  "/game4.jpg",
+  "/game5.jpg",
+  "/game6.jpg"
+];
+
+let selectedButton=0;
 
 // --- RÉCUPÉRER LES TOP SCORES ---
 async function getTopScores(gameId) {
@@ -71,6 +83,8 @@ for(let i=1;i<=6;i++){
   document.getElementById("jeu"+i+"bouton")
   .addEventListener("mouseover",()=>{
     loadScores(i-1);
+    document.getElementById("previewImage").src=images[i-1];
+
   });
   document.getElementById("jeu"+i+"bouton")
   .addEventListener("click",()=>{
@@ -80,7 +94,33 @@ for(let i=1;i<=6;i++){
   });
 }
 
+function joystickQuickmoveHandler(e) {
+    if (e.direction === "up"){
+      if(selectedButton>0){
+        selectedButton--;
+        loadScores(selectedButton);
+        document.getElementById("previewImage").src=images[selectedButton];
+      }
+    }
+    if (e.direction === "down"){
+      if(selectedButton<5){
+        selectedButton++;
+        loadScores(selectedButton);
+        document.getElementById("previewImage").src=images[selectedButton];
+      }
+    };
+}
 
+function keydownHandler(e) {
+    if (e.key === "a") {
+      document.getElementById("container").style.display="none";
+      document.getElementById("openingVideo").style.zIndex="10";
+      document.getElementById("openingVideo").play();
+    }
+}
+
+Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
+Axis.addEventListener("keydown", keydownHandler);
 
 // --- AU CHARGEMENT ---
 loadScores(0);
