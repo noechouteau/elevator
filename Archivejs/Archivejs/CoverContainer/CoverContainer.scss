@@ -1,0 +1,22 @@
+.cover-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  .inner {
+    --defaultWidth: 0px;
+    --defaultHeight: 0px;
+    --scaleX: 1;
+    --scaleY: 1;
+    --offsetX: 0px;
+    --offsetY: 0px;
+
+    position: absolute;
+    width: var(--defaultWidth);
+    height: var(--defaultHeight);
+
+    transform: translate(var(--offsetX), var(--offsetY)) scale(var(--scaleX), var(--scaleY));
+    transform-origin: top left;
+  }
+}
