@@ -35,6 +35,12 @@ const images = [
 
 const gameUrls = [
   "https://gamejame.vercel.app/",
+  "https://bruno-simon.com/",
+  "https://noe.chouteau.org",
+  "https://miamo.fun/",
+  "https://matias.me/nsfw/",
+  "https://fr.wikipedia.org/wiki/Soupeur"
+
 ]
 
 let selectedButton=0;
