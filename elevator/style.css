@@ -38,6 +38,12 @@ button:hover {
   background: #0288d1;
   border: rgb(167, 229, 255) 2px solid;
 }
+
+.hovered {
+  background: #0288d1;
+  border: rgb(167, 229, 255) 2px solid;
+}
+
 #imageAndButtons {
   display: flex;
   flex-direction: column;

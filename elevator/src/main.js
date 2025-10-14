@@ -24,6 +24,8 @@ async function addScore(gameId, playerName, score) {
   loadScores(gameId); // recharge le classement
 }
 
+let gameStarted = false;
+
 const images = [
   "/game1.jpg",
   "/game2.jpg",
@@ -44,6 +46,46 @@ const gameUrls = [
 ]
 
 let selectedButton=0;
+
+function joystickQuickmoveHandler(e) {
+    if (gameStarted) return;
+    if (e.direction === "up"){
+      if(selectedButton>0){
+        selectedButton--;
+        loadScores(selectedButton);
+        document.getElementById("previewImage").src=images[selectedButton];
+        document.getElementById("jeu"+(selectedButton)+"bouton").classList.add("hovered");
+        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.remove("hovered");
+      }
+    }
+    if (e.direction === "down"){
+      if(selectedButton<5){
+        selectedButton++;
+        loadScores(selectedButton);
+        document.getElementById("previewImage").src=images[selectedButton];
+        document.getElementById("jeu"+(selectedButton)+"bouton").classList.add("hovered");
+        document.getElementById("jeu"+(selectedButton-1)+"bouton").classList.remove("hovered");
+      }
+    };
+}
+
+function keydownHandler(e) {
+  if (gameStarted) return;
+  if (e.key === "a") {
+    document.getElementById("gameIframe").src=gameUrls[i-1];
+    document.getElementById("container").style.display="none";
+    document.getElementById("openingVideo").style.zIndex="10";
+    document.getElementById("openingVideo").play();
+    gameStarted = true;
+    setTimeout(()=>{
+      gsap.to(".videoBack", {duration: 1, opacity: 0});
+      console.log("test");
+    },3000);
+  }
+}
+
+Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
+Axis.addEventListener("keydown", keydownHandler);
 
 // --- RÉCUPÉRER LES TOP SCORES ---
 async function getTopScores(gameId) {
@@ -106,6 +148,7 @@ for(let i=1;i<=6;i++){
           setTimeout(()=>{
             gsap.to(".videoBack", {duration: 1, opacity: 0});
             console.log("test");
+            
             document.getElementById("gameIframe").style.zIndex="10";
             setTimeout(()=>{
               gsap.to("#gameIframe", {duration: 1, opacity: 1});
@@ -113,39 +156,6 @@ for(let i=1;i<=6;i++){
           },4000);
   });
 }
-
-function joystickQuickmoveHandler(e) {
-    if (e.direction === "up"){
-      if(selectedButton>0){
-        selectedButton--;
-        loadScores(selectedButton);
-        document.getElementById("previewImage").src=images[selectedButton];
-      }
-    }
-    if (e.direction === "down"){
-      if(selectedButton<5){
-        selectedButton++;
-        loadScores(selectedButton);
-        document.getElementById("previewImage").src=images[selectedButton];
-      }
-    };
-}
-
-function keydownHandler(e) {
-    if (e.key === "a") {
-      document.getElementById("gameIframe").src=gameUrls[i-1];
-      document.getElementById("container").style.display="none";
-      document.getElementById("openingVideo").style.zIndex="10";
-      document.getElementById("openingVideo").play();
-      setTimeout(()=>{
-        gsap.to(".videoBack", {duration: 1, opacity: 0});
-        console.log("test");
-      },3000);
-    }
-}
-
-Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
-Axis.addEventListener("keydown", keydownHandler);
 
 // --- AU CHARGEMENT ---
 loadScores(0);
