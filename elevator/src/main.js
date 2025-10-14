@@ -1,5 +1,6 @@
 import { db } from "./firebase.js";
 import Axis from "axis-api";
+import { gsap } from "gsap";
 import {
   collection,
   addDoc,
@@ -31,6 +32,10 @@ const images = [
   "/game5.jpg",
   "/game6.jpg"
 ];
+
+const gameUrls = [
+  "https://gamejame.vercel.app/",
+]
 
 let selectedButton=0;
 
@@ -86,11 +91,20 @@ for(let i=1;i<=6;i++){
     document.getElementById("previewImage").src=images[i-1];
 
   });
-  document.getElementById("jeu"+i+"bouton")
-  .addEventListener("click",()=>{
-  document.getElementById("container").style.display="none";
-  document.getElementById("openingVideo").style.zIndex="10";
-  document.getElementById("openingVideo").play();
+  document.getElementById("jeu"+i+"bouton").addEventListener("click",()=>{
+    document.getElementById("gameIframe").src=gameUrls[i-1];
+    document.getElementById("container").style.display="none";
+    document.getElementById("right-container").style.display="none";
+    document.getElementById("openingVideo").style.zIndex="10";
+    document.getElementById("openingVideo").play();
+          setTimeout(()=>{
+            gsap.to(".videoBack", {duration: 1, opacity: 0});
+            console.log("test");
+            document.getElementById("gameIframe").style.zIndex="10";
+            setTimeout(()=>{
+              gsap.to("#gameIframe", {duration: 1, opacity: 1});
+            },500);
+          },4000);
   });
 }
 
@@ -113,9 +127,14 @@ function joystickQuickmoveHandler(e) {
 
 function keydownHandler(e) {
     if (e.key === "a") {
+      document.getElementById("gameIframe").src=gameUrls[i-1];
       document.getElementById("container").style.display="none";
       document.getElementById("openingVideo").style.zIndex="10";
       document.getElementById("openingVideo").play();
+      setTimeout(()=>{
+        gsap.to(".videoBack", {duration: 1, opacity: 0});
+        console.log("test");
+      },3000);
     }
 }
 
