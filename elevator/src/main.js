@@ -38,10 +38,10 @@ const images = [
 const gameUrls = [
   "https://gamejame.vercel.app/",
   "https://bruno-simon.com/",
-  "https://www.nytimes.com/games/wordle/index.html",
+  "https://stake.bet/fr",
   "https://miamo.fun/",
   "https://matias.me/nsfw/",
-  "https://fr.wikipedia.org/wiki/Soupeur"
+  "https://neal.fun/"
 
 ]
 
