@@ -38,7 +38,7 @@ const images = [
 const gameUrls = [
   "https://gamejame.vercel.app/",
   "https://bruno-simon.com/",
-  "https://noe.chouteau.org",
+  "https://www.nytimes.com/games/wordle/index.html",
   "https://miamo.fun/",
   "https://matias.me/nsfw/",
   "https://fr.wikipedia.org/wiki/Soupeur"
@@ -48,14 +48,15 @@ const gameUrls = [
 let selectedButton=0;
 
 function joystickQuickmoveHandler(e) {
+    console.log(e);
     if (gameStarted) return;
     if (e.direction === "up"){
       if(selectedButton>0){
         selectedButton--;
         loadScores(selectedButton);
         document.getElementById("previewImage").src=images[selectedButton];
-        document.getElementById("jeu"+(selectedButton)+"bouton").classList.add("hovered");
-        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.remove("hovered");
+        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
+        document.getElementById("jeu"+(selectedButton+2)+"bouton").classList.remove("hovered");
       }
     }
     if (e.direction === "down"){
@@ -63,24 +64,34 @@ function joystickQuickmoveHandler(e) {
         selectedButton++;
         loadScores(selectedButton);
         document.getElementById("previewImage").src=images[selectedButton];
-        document.getElementById("jeu"+(selectedButton)+"bouton").classList.add("hovered");
-        document.getElementById("jeu"+(selectedButton-1)+"bouton").classList.remove("hovered");
+        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
+        document.getElementById("jeu"+(selectedButton)+"bouton").classList.remove("hovered");
       }
     };
+    console.log(selectedButton);
+}
+
+function launchGame(index) {
+  document.getElementById("gameIframe").src=gameUrls[index];
+  document.getElementById("container").style.display="none";
+  document.getElementById("openingVideo").style.zIndex="10";
+  document.getElementById("openingVideo").play();
+  gameStarted = true;
+  setTimeout(()=>{
+    gsap.to(".videoBack", {duration: 1, opacity: 0});
+    console.log("test");
+    
+    document.getElementById("gameIframe").style.zIndex="10";
+    setTimeout(()=>{
+      gsap.to("#gameIframe", {duration: 1, opacity: 1});
+    },500);
+  },4000);
 }
 
 function keydownHandler(e) {
   if (gameStarted) return;
   if (e.key === "a") {
-    document.getElementById("gameIframe").src=gameUrls[i-1];
-    document.getElementById("container").style.display="none";
-    document.getElementById("openingVideo").style.zIndex="10";
-    document.getElementById("openingVideo").play();
-    gameStarted = true;
-    setTimeout(()=>{
-      gsap.to(".videoBack", {duration: 1, opacity: 0});
-      console.log("test");
-    },3000);
+    launchGame(selectedButton);
   }
 }
 
@@ -137,25 +148,23 @@ for(let i=1;i<=6;i++){
   .addEventListener("mouseover",()=>{
     loadScores(i-1);
     document.getElementById("previewImage").src=images[i-1];
-
+    selectedButton=i-1;
   });
   document.getElementById("jeu"+i+"bouton").addEventListener("click",()=>{
-    document.getElementById("gameIframe").src=gameUrls[i-1];
-    document.getElementById("container").style.display="none";
-    document.getElementById("right-container").style.display="none";
-    document.getElementById("openingVideo").style.zIndex="10";
-    document.getElementById("openingVideo").play();
-          setTimeout(()=>{
-            gsap.to(".videoBack", {duration: 1, opacity: 0});
-            console.log("test");
-            
-            document.getElementById("gameIframe").style.zIndex="10";
-            setTimeout(()=>{
-              gsap.to("#gameIframe", {duration: 1, opacity: 1});
-            },500);
-          },4000);
+    launchGame(i-1);
   });
 }
+
+//appeler joystickQuickmoveHandler quand flèche haut ou bas pressée
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp") {
+    joystickQuickmoveHandler({ direction: "up" });
+  } else if (e.key === "ArrowDown") {
+    joystickQuickmoveHandler({ direction: "down" });
+  } else if (e.key === "Enter") {
+    keydownHandler({ key: "a" });
+  }
+});
 
 // --- AU CHARGEMENT ---
 loadScores(0);
