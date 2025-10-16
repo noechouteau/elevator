@@ -49,7 +49,18 @@ let selectedButton=0;
 
 function joystickQuickmoveHandler(e) {
     console.log(e);
-    if (gameStarted) return;
+    if (gameStarted) {
+      const keyMap = {
+        "up": "ArrowUp",
+        "down": "ArrowDown",
+        "left": "ArrowLeft",
+        "right": "ArrowRight"
+      };
+      if (keyMap[e.direction]) {
+        forwardAxisEventToIframe("keydown", keyMap[e.direction]);
+      }
+      return;
+    }
     if (e.direction === "up"){
       if(selectedButton>0){
         selectedButton--;
@@ -74,14 +85,24 @@ function joystickQuickmoveHandler(e) {
 function keydownHandler(e) {
   
   console.log(e);
-  if (gameStarted) return;
+  if (gameStarted) {
+    forwardAxisEventToIframe("keydown", e.key);
+    return;
+  }
   if (e.key === "a" && !gameStarted) {
     launchGame(selectedButton);
   }
 }
 
+function keyupHandler(e) {
+  if (gameStarted) {
+    forwardAxisEventToIframe("keyup", e.key);
+  }
+}
+
 Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
 Axis.addEventListener("keydown", keydownHandler);
+Axis.addEventListener("keyup", keyupHandler);
 
 // --- RÉCUPÉRER LES TOP SCORES ---
 async function getTopScores(gameId) {
@@ -164,22 +185,46 @@ function launchGame(index) {
   document.getElementById("openingVideo").play();
   console.log(Axis.joystick1.removeEventListener);
 
-  Axis.joystick1.removeEventListener("joystick:quickmove", joystickQuickmoveHandler);
-  Axis.removeEventListener("keydown", keydownHandler);
-  
   gameStarted = true;
+  
   setTimeout(()=>{
     gsap.to(".videoBack", {duration: 1, opacity: 0});
     console.log("test");
     
     document.getElementById("gameIframe").style.zIndex="10";
-    document.getElementById("gameIframe").click();
-    document.getElementById("gameIframe").focus();
-    document.getElementById("gameIframe").contentWindow.focus();
+    
+    const iframe = document.getElementById("gameIframe");
+    iframe.setAttribute("tabindex", "0");
+    iframe.focus();
+    
+    try {
+      iframe.contentWindow.focus();
+    } catch(e) {
+      console.log("Cannot access iframe contentWindow (CORS)");
+    }
+    
     setTimeout(()=>{
       gsap.to("#gameIframe", {duration: 1, opacity: 1});
+      iframe.focus();
     },500);
   },4000);
+}
+
+function forwardAxisEventToIframe(eventType, key) {
+  if (!gameStarted) return;
+  
+  const iframe = document.getElementById("gameIframe");
+  try {
+    const event = new KeyboardEvent(eventType, {
+      key: key,
+      code: key,
+      bubbles: true,
+      cancelable: true
+    });
+    iframe.contentWindow.document.dispatchEvent(event);
+  } catch(e) {
+    console.log("Cannot dispatch event to iframe (CORS restriction)");
+  }
 }
 
 // --- AU CHARGEMENT ---
