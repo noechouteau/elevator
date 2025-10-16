@@ -75,7 +75,7 @@ function keydownHandler(e) {
   
   console.log(e);
   if (gameStarted) return;
-  if (e.key === "a") {
+  if (e.key === "a" && !gameStarted) {
     launchGame(selectedButton);
   }
 }
@@ -173,6 +173,9 @@ function launchGame(index) {
     console.log("test");
     
     document.getElementById("gameIframe").style.zIndex="10";
+    document.getElementById("gameIframe").click();
+    document.getElementById("gameIframe").focus();
+    document.getElementById("gameIframe").contentWindow.focus();
     setTimeout(()=>{
       gsap.to("#gameIframe", {duration: 1, opacity: 1});
     },500);
