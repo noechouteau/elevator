@@ -76,6 +76,8 @@ function launchGame(index) {
   document.getElementById("container").style.display="none";
   document.getElementById("openingVideo").style.zIndex="10";
   document.getElementById("openingVideo").play();
+  Axis.removeEventListener("joystick:quickmove", joystickQuickmoveHandler);
+  Axis.removeEventListener("keydown", keydownHandler);
   gameStarted = true;
   setTimeout(()=>{
     gsap.to(".videoBack", {duration: 1, opacity: 0});
