@@ -71,26 +71,9 @@ function joystickQuickmoveHandler(e) {
     console.log(selectedButton);
 }
 
-function launchGame(index) {
-  document.getElementById("gameIframe").src=gameUrls[index];
-  document.getElementById("container").style.display="none";
-  document.getElementById("openingVideo").style.zIndex="10";
-  document.getElementById("openingVideo").play();
-  Axis.removeEventListener("joystick:quickmove", joystickQuickmoveHandler);
-  Axis.removeEventListener("keydown", keydownHandler);
-  gameStarted = true;
-  setTimeout(()=>{
-    gsap.to(".videoBack", {duration: 1, opacity: 0});
-    console.log("test");
-    
-    document.getElementById("gameIframe").style.zIndex="10";
-    setTimeout(()=>{
-      gsap.to("#gameIframe", {duration: 1, opacity: 1});
-    },500);
-  },4000);
-}
-
 function keydownHandler(e) {
+  
+  console.log(e);
   if (gameStarted) return;
   if (e.key === "a") {
     launchGame(selectedButton);
@@ -165,8 +148,36 @@ document.addEventListener("keydown", (e) => {
     joystickQuickmoveHandler({ direction: "down" });
   } else if (e.key === "Enter") {
     keydownHandler({ key: "a" });
+  } else if (e.key === "x") {
+    keydownHandler({ key: "x" });
+  } else if (e.key === "i") {
+    keydownHandler({ key: "i" });
+  } else if (e.key === "s") {
+    keydownHandler({ key: "s" });
   }
 });
+
+function launchGame(index) {
+  document.getElementById("gameIframe").src=gameUrls[index];
+  document.getElementById("container").style.display="none";
+  document.getElementById("openingVideo").style.zIndex="10";
+  document.getElementById("openingVideo").play();
+  console.log(Axis.joystick1.removeEventListener);
+
+  Axis.joystick1.removeEventListener("joystick:quickmove", joystickQuickmoveHandler);
+  Axis.removeEventListener("keydown", keydownHandler);
+  
+  gameStarted = true;
+  setTimeout(()=>{
+    gsap.to(".videoBack", {duration: 1, opacity: 0});
+    console.log("test");
+    
+    document.getElementById("gameIframe").style.zIndex="10";
+    setTimeout(()=>{
+      gsap.to("#gameIframe", {duration: 1, opacity: 1});
+    },500);
+  },4000);
+}
 
 // --- AU CHARGEMENT ---
 loadScores(0);
