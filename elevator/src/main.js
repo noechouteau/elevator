@@ -365,9 +365,9 @@ function launchGame(index) {
     },500);
   },4000);
 
-  setTimeout(()=>{
-    backToElevator();
-  },8000);
+  // setTimeout(()=>{
+  //   backToElevator();
+  // },8000);
 }
 
 // Expose helper to console for easier testing
