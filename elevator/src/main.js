@@ -51,6 +51,24 @@ let selectedButton=0;
 let gameFrameLoaded = false;
 let gameFrameOrigin = '*';
 const messageQueue = [];
+let finishedGames = [];
+
+const input = document.querySelector("input#username");
+
+Axis.virtualKeyboard.open();
+
+Axis.virtualKeyboard.addEventListener("input", (username) => {
+    input.value = username;
+});
+
+Axis.virtualKeyboard.addEventListener("validate", (username) => {
+    Axis.virtualKeyboard.close(); // ✅ corrige la référence
+    // leaderboard.postScore({
+    //     username,
+    //     value: 100098796,
+    // });
+    createSession(username);
+});
 
 function joystickQuickmoveHandler(e) {
     console.log(e);
@@ -225,14 +243,14 @@ document.addEventListener("keydown", (e) => {
 });
 
 async function createSession(playerName) {
-
+  let testId = "";
   await addDoc(collection(db, "sessions"), {
     playerName,
   }).then((docRef) => {
     console.log("✅ Session créée avec ID :", docRef.id);
+    testId = docRef.id;
   });
   
-  const testId = docRef.id;
   const ref = doc(db, "sessions", testId);
 
   onSnapshot(ref, (docSnap) => {
