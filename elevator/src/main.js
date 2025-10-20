@@ -76,8 +76,12 @@ function safePostToIframe(message) {
   const iframe = document.getElementById("gameIframe");
   if (!iframe || !iframe.src) return;
   try {
-    // use '*' because many game urls are cross-origin; the target page should verify origin if needed
-    iframe.contentWindow.postMessage(message, '*');
+    // compute a stricter target origin if possible; fallback to '*'
+    let targetOrigin = '*';
+    try {
+      targetOrigin = new URL(iframe.src, window.location.href).origin;
+    } catch (_) {}
+    iframe.contentWindow.postMessage(message, targetOrigin);
   } catch (err) {
     // ignore cross-origin/frame not ready errors
     console.warn('postMessage failed:', err);
@@ -98,12 +102,25 @@ Axis.addEventListener("keydown", keydownHandler);
 
 // forward joystick quickmove events to iframe
 Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
-  safePostToIframe({type: 'joystick:quickmove', detail: ev});
+  if (!gameStarted) return;
+  // pick only serializable fields
+  const payload = { direction: ev?.direction };
+  safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
 });
 
-// forward keydown events to iframe
+// forward keydown events to iframe (serialize only needed props)
 Axis.addEventListener('keydown', (ev) => {
-  safePostToIframe({type: 'keydown', detail: ev});
+  if (!gameStarted) return;
+  const payload = {
+    key: ev?.key,
+    code: ev?.code,
+    keyCode: ev?.keyCode,
+    metaKey: !!ev?.metaKey,
+    ctrlKey: !!ev?.ctrlKey,
+    altKey: !!ev?.altKey,
+    shiftKey: !!ev?.shiftKey
+  };
+  safePostToIframe({ type: 'axis-event', event: 'keydown', payload });
 });
 
 // --- RÉCUPÉRER LES TOP SCORES ---
