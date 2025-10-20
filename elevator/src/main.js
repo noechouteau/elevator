@@ -55,20 +55,20 @@ let finishedGames = [];
 
 const input = document.querySelector("input#username");
 
-Axis.virtualKeyboard.open();
+// Axis.virtualKeyboard.open();
 
-Axis.virtualKeyboard.addEventListener("input", (username) => {
-    input.value = username;
-});
+// Axis.virtualKeyboard.addEventListener("input", (username) => {
+//     input.value = username;
+// });
 
-Axis.virtualKeyboard.addEventListener("validate", (username) => {
-    Axis.virtualKeyboard.close(); // ✅ corrige la référence
-    // leaderboard.postScore({
-    //     username,
-    //     value: 100098796,
-    // });
-    createSession(username);
-});
+// Axis.virtualKeyboard.addEventListener("validate", (username) => {
+//     Axis.virtualKeyboard.close(); // ✅ corrige la référence
+//     // leaderboard.postScore({
+//     //     username,
+//     //     value: 100098796,
+//     // });
+//     createSession(username);
+// });
 
 function joystickQuickmoveHandler(e) {
     console.log(e);
