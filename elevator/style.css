@@ -9,21 +9,27 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
 h1 {
   margin-bottom: 20px;
 }
+
 table {
   border-collapse: collapse;
   width: 300px;
   text-align: center;
 }
-th, td {
+
+th,
+td {
   padding: 8px;
   border-bottom: 1px solid #444;
 }
+
 tr:nth-child(even) {
   background-color: #1a1a1a;
 }
+
 button {
   margin-top: 20px;
   padding: 8px 12px;
@@ -52,12 +58,14 @@ button:hover {
   width: 100vw;
   overflow: hidden;
 }
+
 .background {
   width: 100vw;
   height: 100vh;
   object-fit: contain;
 }
-#scoreContainer,#floorsButtons {
+
+#scoreContainer {
   background: rgba(0, 0, 0, 0.5);
   padding: 10px;
   border-radius: 10px;
@@ -67,8 +75,7 @@ button:hover {
 }
 
 #scoreContainer {
-  width:650px;
-
+  width: 650px;
 }
 
 #container {
@@ -79,11 +86,115 @@ button:hover {
   justify-content: center;
   align-items: center;
 }
+
 #right-container {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  top: 26%;
+  right: 13%;
+  transform: translateY(-50%);
   display: flex;
-  justify-content: right;
+  justify-content: center;
   align-items: center;
+}
+
+#floorsButtons {
+  width: auto;
+  height: auto;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.circle {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000 70%);
+  border: 1px solid #ff3333;
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow:
+    0 0 20px rgba(255, 51, 51, 0.5),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.circle::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center,
+      rgba(255, 51, 51, 0.3) 0%,
+      rgba(255, 51, 51, 0) 70%);
+  z-index: -1;
+}
+
+.circle:hover {
+  border-color: #ff6666;
+  box-shadow:
+    0 0 30px rgba(255, 51, 51, 0.8),
+    inset 0 0 15px rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
+}
+
+.circle.active {
+  border-color: #33ff33;
+  box-shadow:
+    0 0 30px rgba(51, 255, 51, 0.8),
+    inset 0 0 15px rgba(0, 0, 0, 0.9);
+}
+
+.circle.active::before {
+  background: radial-gradient(circle at center,
+      rgba(51, 255, 51, 0.3) 0%,
+      rgba(51, 255, 51, 0) 70%);
+}
+
+.circle svg {
+  width: 40px;
+  height: 40px;
+  stroke: #33ff33;
+  stroke-width: 3;
+  fill: none;
+}
+
+#currentFloor {
+  border-color: #33ff33;
+  box-shadow:
+    0 0 30px rgba(51, 255, 51, 0.8),
+    inset 0 0 15px rgba(0, 0, 0, 0.9);
+}
+
+#currentFloor::before {
+  background: radial-gradient(circle at center,
+      rgba(51, 255, 51, 0.3) 0%,
+      rgba(51, 255, 51, 0) 70%);
+}
+
+#ground {
+  border-color: #666;
+  box-shadow:
+    0 0 10px rgba(100, 100, 100, 0.3),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+#ground::before {
+  background: radial-gradient(circle at center,
+      rgba(100, 100, 100, 0.2) 0%,
+      rgba(100, 100, 100, 0) 70%);
 }
