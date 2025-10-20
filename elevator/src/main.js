@@ -46,6 +46,9 @@ const gameUrls = [
 ]
 
 let selectedButton=0;
+let gameFrameLoaded = false;
+let gameFrameOrigin = '*';
+const messageQueue = [];
 
 function joystickQuickmoveHandler(e) {
     console.log(e);
@@ -75,16 +78,20 @@ function joystickQuickmoveHandler(e) {
 function safePostToIframe(message) {
   const iframe = document.getElementById("gameIframe");
   if (!iframe || !iframe.src) return;
+  // queue messages until iframe has loaded to avoid origin mismatch errors
+  if (!gameFrameLoaded) {
+    messageQueue.push(message);
+    return;
+  }
   try {
-    // compute a stricter target origin if possible; fallback to '*'
-    let targetOrigin = '*';
-    try {
-      targetOrigin = new URL(iframe.src, window.location.href).origin;
-    } catch (_) {}
-    iframe.contentWindow.postMessage(message, targetOrigin);
+    iframe.contentWindow.postMessage(message, gameFrameOrigin || '*');
   } catch (err) {
-    // ignore cross-origin/frame not ready errors
-    console.warn('postMessage failed:', err);
+    // If origin mismatch or any failure, retry with '*'
+    try {
+      iframe.contentWindow.postMessage(message, '*');
+    } catch (err2) {
+      console.warn('postMessage failed:', err2);
+    }
   }
 }
 
@@ -198,7 +205,24 @@ document.addEventListener("keydown", (e) => {
 });
 
 function launchGame(index) {
-  document.getElementById("gameIframe").src=gameUrls[index];
+  const iframe = document.getElementById("gameIframe");
+  gameFrameLoaded = false;
+  gameFrameOrigin = '*';
+  // set src then wait on load to flush queue
+  iframe.src = gameUrls[index];
+  iframe.onload = () => {
+    gameFrameLoaded = true;
+    try {
+      gameFrameOrigin = new URL(iframe.src, window.location.href).origin;
+    } catch (_) {
+      gameFrameOrigin = '*';
+    }
+    // flush queued messages
+    while (messageQueue.length) {
+      const msg = messageQueue.shift();
+      safePostToIframe(msg);
+    }
+  };
   document.getElementById("container").style.display="none";
   document.getElementById("openingVideo").style.zIndex="10";
   document.getElementById("openingVideo").play();
@@ -212,10 +236,10 @@ function launchGame(index) {
     gsap.to(".videoBack", {duration: 1, opacity: 0});
     console.log("test");
     
-    document.getElementById("gameIframe").style.zIndex="10";
-    document.getElementById("gameIframe").click();
-    document.getElementById("gameIframe").focus();
-    document.getElementById("gameIframe").contentWindow.focus();
+  iframe.style.zIndex="10";
+  iframe.click();
+  iframe.focus();
+  try { iframe.contentWindow.focus(); } catch(_) {}
     setTimeout(()=>{
       gsap.to("#gameIframe", {duration: 1, opacity: 1});
     },500);
