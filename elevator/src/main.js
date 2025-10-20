@@ -71,6 +71,19 @@ function joystickQuickmoveHandler(e) {
     console.log(selectedButton);
 }
 
+// Forward Axis events to iframe so embedded games can receive controls (safe, ignores cross-origin errors)
+function safePostToIframe(message) {
+  const iframe = document.getElementById("gameIframe");
+  if (!iframe || !iframe.src) return;
+  try {
+    // use '*' because many game urls are cross-origin; the target page should verify origin if needed
+    iframe.contentWindow.postMessage(message, '*');
+  } catch (err) {
+    // ignore cross-origin/frame not ready errors
+    console.warn('postMessage failed:', err);
+  }
+}
+
 function keydownHandler(e) {
   
   console.log(e);
@@ -82,6 +95,16 @@ function keydownHandler(e) {
 
 Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
 Axis.addEventListener("keydown", keydownHandler);
+
+// forward joystick quickmove events to iframe
+Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
+  safePostToIframe({type: 'joystick:quickmove', detail: ev});
+});
+
+// forward keydown events to iframe
+Axis.addEventListener('keydown', (ev) => {
+  safePostToIframe({type: 'keydown', detail: ev});
+});
 
 // --- RÉCUPÉRER LES TOP SCORES ---
 async function getTopScores(gameId) {
