@@ -94,6 +94,34 @@ function joystickQuickmoveHandler(e) {
     console.log(selectedButton);
 }
 
+// Variable pour tracker l'état du scoreboard
+let scoreboardVisible = false;
+
+// Fonction pour toggle le scoreboard
+function toggleScoreboard() {
+  const scoreContainer = document.getElementById("scoreContainer");
+  
+  if (scoreboardVisible) {
+    // Cacher le scoreboard
+    gsap.to("#scoreContainer", {
+      duration: 0.3,
+      opacity: 0,
+      onComplete: () => {
+        scoreContainer.style.display = "none";
+      }
+    });
+    scoreboardVisible = false;
+  } else {
+    // Afficher le scoreboard
+    scoreContainer.style.display = "flex";
+    gsap.fromTo("#scoreContainer", 
+      { opacity: 0, scale: 0.9 },
+      { duration: 0.3, opacity: 1, scale: 1 }
+    );
+    scoreboardVisible = true;
+  }
+}
+
 // Forward Axis events to iframe so embedded games can receive controls (safe, ignores cross-origin errors)
 function safePostToIframe(message) {
   const iframe = document.getElementById("gameIframe");
@@ -122,8 +150,13 @@ function keydownHandler(e) {
   
   console.log(e);
   if (gameStarted) return;
+  
   if (e.key === "a" && !gameStarted) {
     launchGame(selectedButton);
+  }
+
+  if (e.key === "x" && !gameStarted) {
+    toggleScoreboard();
   }
 }
 
