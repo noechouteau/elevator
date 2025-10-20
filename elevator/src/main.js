@@ -134,17 +134,32 @@ Axis.addEventListener("keydown", keydownHandler);
 Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
   if (!gameStarted) return;
   // pick only serializable fields
-  const payload = { direction: ev?.direction };
+  const payload = { direction: ev?.direction, id: ev?.id || 1, joystick: 1 };
   safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
 });
+
+// if a second physical joystick is present, forward its quickmove too
+try {
+  if (Axis.joystick2 && typeof Axis.joystick2.addEventListener === 'function') {
+    Axis.joystick2.addEventListener('joystick:quickmove', (ev) => {
+      if (!gameStarted) return;
+      const payload = { direction: ev?.direction, id: ev?.id || 2, joystick: 2 };
+      safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
+    });
+  }
+} catch (_) {}
 
 // forward keydown events to iframe (serialize only needed props)
 Axis.addEventListener('keydown', (ev) => {
   if (!gameStarted) return;
+  const controllerId = ev?.id || '';
+  const rawKey = (ev?.key || '');
   const payload = {
-    key: ev?.key,
+    // suffix key with controller id so parent sends 'a1' or 'a2'
+    key: controllerId ? `${rawKey}${controllerId}` : rawKey,
     code: ev?.code,
     keyCode: ev?.keyCode,
+    id: ev?.id,
     metaKey: !!ev?.metaKey,
     ctrlKey: !!ev?.ctrlKey,
     altKey: !!ev?.altKey,
@@ -156,10 +171,13 @@ Axis.addEventListener('keydown', (ev) => {
 // forward keyup events to iframe (serialize only needed props)
 Axis.addEventListener('keyup', (ev) => {
   if (!gameStarted) return;
+  const controllerId = ev?.id || '';
+  const rawKey = (ev?.key || '');
   const payload = {
-    key: ev?.key,
+    key: controllerId ? `${rawKey}${controllerId}` : rawKey,
     code: ev?.code,
     keyCode: ev?.keyCode,
+    id: ev?.id,
     metaKey: !!ev?.metaKey,
     ctrlKey: !!ev?.ctrlKey,
     altKey: !!ev?.altKey,
