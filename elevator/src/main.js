@@ -39,7 +39,7 @@ const images = [
 
 const gameUrls = [
   "https://gamejame.vercel.app/",
-  "https://bruno-simon.com/",
+  "https://flippergj.vercel.app/",
   "https://stake.bet/fr",
   "https://miamo.fun/",
   "https://matias.me/nsfw/",
