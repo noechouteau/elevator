@@ -218,9 +218,16 @@ function launchGame(index) {
   }, 4000);
 }
 
-async function createSession() {
-  const testId = "jvcRmaty6Rks8DbckK1B"
-  // const ref = doc(db, "session");
+// A APPELER QUAND PSEUDO EST SAISI
+async function createSession(playerName) {
+
+  await addDoc(collection(db, "sessions"), {
+    playerName,
+  }).then((docRef) => {
+    console.log("✅ Session créée avec ID :", docRef.id);
+  });
+  
+  const testId = docRef.id;
   const ref = doc(db, "sessions", testId);
 
   onSnapshot(ref, (docSnap) => {
@@ -237,7 +244,10 @@ async function createSession() {
   });
 }
 
-createSession();
+async function backToElevator(){
+  // Logique pour revenir à l'ascenseur
+}
+
 
 
 // --- USERNAME OVERLAY & VIRTUAL KEYBOARD FLOW ---
