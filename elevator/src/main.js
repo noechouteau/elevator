@@ -10,13 +10,16 @@ import {
   orderBy,
   limit,
   getDocs,
-  Timestamp
+  Timestamp,
+  doc,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-import { doc, onSnapshot } from "firebase/firestore";
 
 
+let finishedGames = [];
 
 async function addScore(gameId, playerName, score) {
+  await createSession();
   await addDoc(collection(db, "highscores"), {
     gameId,
     playerName,
@@ -217,19 +220,25 @@ function launchGame(index) {
 
 async function createSession() {
   const testId = "jvcRmaty6Rks8DbckK1B"
-  const ref = doc(db, "session", testId);
+  // const ref = doc(db, "session");
+  const ref = doc(db, "sessions", testId);
 
   onSnapshot(ref, (docSnap) => {
     if (docSnap.exists()) {
       console.log("💡 Document mis à jour :", docSnap.data());
+      finishedGames = docSnap.data().finishedGames || [];
+      console.log("Finished games mis à jour :", finishedGames);
+
+      // Mettre à jour les boutons de jeu en fonction des finishedGames
+
     } else {
       console.log("⚠️ Document supprimé ou inexistant");
     }
   });
-
 }
 
 createSession();
+
 
 // --- USERNAME OVERLAY & VIRTUAL KEYBOARD FLOW ---
 function initUsernameFlow() {
