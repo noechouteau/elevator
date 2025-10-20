@@ -1,6 +1,5 @@
 import { db } from "./firebase.js";
 import Axis from "axis-api";
-import Leaderboard from "./leaderboard.js";
 import { gsap } from "gsap";
 import {
   collection,
@@ -10,16 +9,11 @@ import {
   orderBy,
   limit,
   getDocs,
-  Timestamp,
-  doc,
-  onSnapshot
+  Timestamp
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-
-let finishedGames = [];
-
+// --- AJOUTER UN SCORE ---
 async function addScore(gameId, playerName, score) {
-  await createSession();
   await addDoc(collection(db, "highscores"), {
     gameId,
     playerName,
@@ -31,8 +25,6 @@ async function addScore(gameId, playerName, score) {
 }
 
 let gameStarted = false;
-let username = localStorage.getItem("username") || "";
-const leaderboard = new Leaderboard();
 
 const images = [
   "/game1.jpg",
@@ -53,47 +45,61 @@ const gameUrls = [
 
 ]
 
-let selectedButton = 0;
+let selectedButton=0;
+let gameFrameLoaded = false;
+let gameFrameOrigin = '*';
+const messageQueue = [];
 
 function joystickQuickmoveHandler(e) {
-  console.log(e);
-  if (gameStarted) return;
-  if (e.direction === "up") {
-    if (selectedButton > 0) {
-      selectedButton--;
-      loadScores(selectedButton);
-      document.getElementById("previewImage").src = images[selectedButton];
-      document.getElementById("jeu" + (selectedButton + 1) + "bouton").classList.add("hovered");
-      document.getElementById("jeu" + (selectedButton + 2) + "bouton").classList.remove("hovered");
+    console.log(e);
+    if (gameStarted) return;
+    if (e.direction === "up"){
+      if(selectedButton>0){
+        selectedButton--;
+        loadScores(selectedButton);
+        document.getElementById("previewImage").src=images[selectedButton];
+        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
+        document.getElementById("jeu"+(selectedButton+2)+"bouton").classList.remove("hovered");
+      }
     }
-  }
-  if (e.direction === "down") {
-    if (selectedButton < 5) {
-      selectedButton++;
-      loadScores(selectedButton);
-      document.getElementById("previewImage").src = images[selectedButton];
-      document.getElementById("jeu" + (selectedButton + 1) + "bouton").classList.add("hovered");
-      document.getElementById("jeu" + (selectedButton) + "bouton").classList.remove("hovered");
-    }
-  };
-  console.log(selectedButton);
+    if (e.direction === "down"){
+      if(selectedButton<5){
+        selectedButton++;
+        loadScores(selectedButton);
+        document.getElementById("previewImage").src=images[selectedButton];
+        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
+        document.getElementById("jeu"+(selectedButton)+"bouton").classList.remove("hovered");
+      }
+    };
+    console.log(selectedButton);
 }
 
 // Forward Axis events to iframe so embedded games can receive controls (safe, ignores cross-origin errors)
 function safePostToIframe(message) {
   const iframe = document.getElementById("gameIframe");
   if (!iframe || !iframe.src) return;
+  // queue messages until iframe has loaded to avoid origin mismatch errors
+  if (!gameFrameLoaded) {
+    console.log('[parent] queueing message until iframe loaded', message);
+    messageQueue.push(message);
+    return;
+  }
   try {
-    // use '*' because many game urls are cross-origin; the target page should verify origin if needed
-    iframe.contentWindow.postMessage(message, '*');
+    console.log('[parent] sending to iframe', { message, targetOrigin: gameFrameOrigin || '*' });
+    iframe.contentWindow.postMessage(message, gameFrameOrigin || '*');
   } catch (err) {
-    // ignore cross-origin/frame not ready errors
-    console.warn('postMessage failed:', err);
+    // If origin mismatch or any failure, retry with '*'
+    try {
+      console.warn('[parent] send failed, retrying with *', err);
+      iframe.contentWindow.postMessage(message, '*');
+    } catch (err2) {
+      console.error('[parent] postMessage failed (final):', err2);
+    }
   }
 }
 
 function keydownHandler(e) {
-
+  
   console.log(e);
   if (gameStarted) return;
   if (e.key === "a" && !gameStarted) {
@@ -106,12 +112,40 @@ Axis.addEventListener("keydown", keydownHandler);
 
 // forward joystick quickmove events to iframe
 Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
-  safePostToIframe({ type: 'joystick:quickmove', detail: ev });
+  if (!gameStarted) return;
+  // pick only serializable fields
+  const payload = { direction: ev?.direction };
+  safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
 });
 
-// forward keydown events to iframe
+// forward keydown events to iframe (serialize only needed props)
 Axis.addEventListener('keydown', (ev) => {
-  safePostToIframe({ type: 'keydown', detail: ev });
+  if (!gameStarted) return;
+  const payload = {
+    key: ev?.key,
+    code: ev?.code,
+    keyCode: ev?.keyCode,
+    metaKey: !!ev?.metaKey,
+    ctrlKey: !!ev?.ctrlKey,
+    altKey: !!ev?.altKey,
+    shiftKey: !!ev?.shiftKey
+  };
+  safePostToIframe({ type: 'axis-event', event: 'keydown', payload });
+});
+
+// forward keyup events to iframe (serialize only needed props)
+Axis.addEventListener('keyup', (ev) => {
+  if (!gameStarted) return;
+  const payload = {
+    key: ev?.key,
+    code: ev?.code,
+    keyCode: ev?.keyCode,
+    metaKey: !!ev?.metaKey,
+    ctrlKey: !!ev?.ctrlKey,
+    altKey: !!ev?.altKey,
+    shiftKey: !!ev?.shiftKey
+  };
+  safePostToIframe({ type: 'axis-event', event: 'keyup', payload });
 });
 
 // --- RÉCUPÉRER LES TOP SCORES ---
@@ -159,25 +193,20 @@ document.getElementById("addScoreBtn").addEventListener("click", () => {
   addScore(randomGameId, randomPlayer, randomScore);
 });
 
-for (let i = 1; i <= 6; i++) {
-  document.getElementById("jeu" + i + "bouton")
-    .addEventListener("mouseover", () => {
-      loadScores(i - 1);
-      document.getElementById("previewImage").src = images[i - 1];
-      selectedButton = i - 1;
-    });
-  document.getElementById("jeu" + i + "bouton").addEventListener("click", () => {
-    launchGame(i - 1);
+for(let i=1;i<=6;i++){
+  document.getElementById("jeu"+i+"bouton")
+  .addEventListener("mouseover",()=>{
+    loadScores(i-1);
+    document.getElementById("previewImage").src=images[i-1];
+    selectedButton=i-1;
+  });
+  document.getElementById("jeu"+i+"bouton").addEventListener("click",()=>{
+    launchGame(i-1);
   });
 }
 
 //appeler joystickQuickmoveHandler quand flèche haut ou bas pressée
 document.addEventListener("keydown", (e) => {
-  // If username overlay is active, ignore global mappings and let input handle Enter
-  const overlay = document.getElementById("usernameOverlay");
-  if (overlay && !overlay.classList.contains("hidden")) {
-    return;
-  }
   if (e.key === "ArrowUp") {
     joystickQuickmoveHandler({ direction: "up" });
   } else if (e.key === "ArrowDown") {
@@ -194,58 +223,67 @@ document.addEventListener("keydown", (e) => {
 });
 
 function launchGame(index) {
-  document.getElementById("gameIframe").src = gameUrls[index];
-  document.getElementById("container").style.display = "none";
-  document.getElementById("openingVideo").style.zIndex = "10";
+  const iframe = document.getElementById("gameIframe");
+  gameFrameLoaded = false;
+  gameFrameOrigin = '*';
+  // set src then wait on load to flush queue
+  iframe.src = gameUrls[index];
+  iframe.onload = () => {
+    gameFrameLoaded = true;
+    try {
+      gameFrameOrigin = new URL(iframe.src, window.location.href).origin;
+    } catch (_) {
+      gameFrameOrigin = '*';
+    }
+    // flush queued messages
+    while (messageQueue.length) {
+      const msg = messageQueue.shift();
+      safePostToIframe(msg);
+    }
+    // If iframe is same-origin, try injecting the bridge script automatically so games don't need to include it.
+    try {
+      if (gameFrameOrigin === window.location.origin) {
+        try {
+          const doc = iframe.contentDocument;
+          if (doc) {
+            const s = doc.createElement('script');
+            s.type = 'text/javascript';
+            s.src = '/src/iframe-bridge.js';
+            doc.head.appendChild(s);
+            console.log('Injected /src/iframe-bridge.js into iframe (same-origin)');
+          }
+        } catch (injErr) {
+          // fallback: might fail if iframe isn't fully ready for DOM injection yet
+          console.warn('Injection into iframe failed:', injErr);
+        }
+      } else {
+        console.log('Iframe is cross-origin; include iframe-bridge.js inside the game to receive parent messages.');
+      }
+    } catch (e) {
+      console.warn('Error while attempting to inject bridge:', e);
+    }
+  };
+  document.getElementById("container").style.display="none";
+  document.getElementById("openingVideo").style.zIndex="10";
   document.getElementById("openingVideo").play();
   console.log(Axis.joystick1.removeEventListener);
 
   Axis.joystick1.removeEventListener("joystick:quickmove", joystickQuickmoveHandler);
   Axis.removeEventListener("keydown", keydownHandler);
-
-  gameStarted = true;
-  setTimeout(() => {
-    gsap.to(".videoBack", { duration: 1, opacity: 0 });
-    console.log("test");
-
-    document.getElementById("gameIframe").style.zIndex = "10";
-    document.getElementById("gameIframe").click();
-    document.getElementById("gameIframe").focus();
-    document.getElementById("gameIframe").contentWindow.focus();
-    setTimeout(() => {
-      gsap.to("#gameIframe", { duration: 1, opacity: 1 });
-    }, 500);
-  }, 4000);
-}
-
-// A APPELER QUAND PSEUDO EST SAISI
-async function createSession(playerName) {
-
-  await addDoc(collection(db, "sessions"), {
-    playerName,
-  }).then((docRef) => {
-    console.log("✅ Session créée avec ID :", docRef.id);
-  });
   
-  const testId = docRef.id;
-  const ref = doc(db, "sessions", testId);
-
-  onSnapshot(ref, (docSnap) => {
-    if (docSnap.exists()) {
-      console.log("💡 Document mis à jour :", docSnap.data());
-      finishedGames = docSnap.data().finishedGames || [];
-      console.log("Finished games mis à jour :", finishedGames);
-
-      // Mettre à jour les boutons de jeu en fonction des finishedGames
-
-    } else {
-      console.log("⚠️ Document supprimé ou inexistant");
-    }
-  });
-}
-
-async function backToElevator(){
-  // Logique pour revenir à l'ascenseur
+  gameStarted = true;
+  setTimeout(()=>{
+    gsap.to(".videoBack", {duration: 1, opacity: 0});
+    console.log("test");
+    
+  iframe.style.zIndex="10";
+  iframe.click();
+  iframe.focus();
+  try { iframe.contentWindow.focus(); } catch(_) {}
+    setTimeout(()=>{
+      gsap.to("#gameIframe", {duration: 1, opacity: 1});
+    },500);
+  },4000);
 }
 
 // Expose helper to console for easier testing
@@ -254,4 +292,3 @@ try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch(e){ 
 
 // --- AU CHARGEMENT ---
 loadScores(0);
-initUsernameFlow();
