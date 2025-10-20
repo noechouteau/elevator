@@ -39,13 +39,12 @@ const images = [
 
 const gameUrls = [
   "https://gamejame.vercel.app/",
-  "https://flippergj.vercel.app/",
   "https://stake.bet/fr",
   "https://miamo.fun/",
   "https://matias.me/nsfw/",
-  "https://neal.fun/"
-
-]
+  "https://neal.fun/",
+  "https://flippergj.vercel.app/"
+];
 
 let selectedButton=0;
 let gameFrameLoaded = false;
