@@ -9,7 +9,9 @@ import {
   orderBy,
   limit,
   getDocs,
-  Timestamp
+  Timestamp,
+  doc,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // --- AJOUTER UN SCORE ---
@@ -221,6 +223,35 @@ document.addEventListener("keydown", (e) => {
     keydownHandler({ key: "s" });
   }
 });
+
+async function createSession(playerName) {
+
+  await addDoc(collection(db, "sessions"), {
+    playerName,
+  }).then((docRef) => {
+    console.log("✅ Session créée avec ID :", docRef.id);
+  });
+  
+  const testId = docRef.id;
+  const ref = doc(db, "sessions", testId);
+
+  onSnapshot(ref, (docSnap) => {
+    if (docSnap.exists()) {
+      console.log("💡 Document mis à jour :", docSnap.data());
+      finishedGames = docSnap.data().finishedGames || [];
+      console.log("Finished games mis à jour :", finishedGames);
+
+      // Mettre à jour les boutons de jeu en fonction des finishedGames
+
+    } else {
+      console.log("⚠️ Document supprimé ou inexistant");
+    }
+  });
+}
+
+async function backToElevator(){
+  // Logique pour revenir à l'ascenseur
+}
 
 function launchGame(index) {
   const iframe = document.getElementById("gameIframe");
