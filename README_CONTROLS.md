@@ -46,6 +46,11 @@ Exemples de payloads
   - payload.id : id numérique du contrôleur
   - payload.joystick : 1 ou 2 (indique lequel des joysticks physiques)
 
+- joystick:move
+  - payload.position : { x: number, y: number } où x et y sont des valeurs analogiques entre -1 et 1
+  - payload.id : id numérique du contrôleur
+  - payload.joystick : 1 ou 2 (indique lequel des joysticks physiques)
+
 - paste
   - payload.text : texte à coller dans l'élément actif de la page iframe
 
@@ -117,6 +122,14 @@ window.addEventListener('message', (ev) => {
     const dir = msg.payload.direction;
     const joystickId = msg.payload.joystick;
     // appliquer la logique de navigation
+  }
+
+  if (msg.event === 'joystick:move') {
+    // joystick analogique — ex: déplacement de l'avatar
+    const pos = msg.payload?.position || { x: 0, y: 0 };
+    const joystickId = msg.payload?.joystick || msg.payload?.id || 1;
+    // exemple d'utilisation : ajouter la vélocité du joueur
+    // player.move(pos.x, pos.y, joystickId);
   }
 
   if (msg.event === 'paste') {

@@ -170,6 +170,13 @@ Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
   safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
 });
 
+// forward joystick move events (analog) to iframe
+Axis.joystick1.addEventListener('joystick:move', (ev) => {
+  if (!gameStarted) return;
+  const payload = { position: ev?.position || { x: 0, y: 0 }, id: ev?.id || 1, joystick: 1 };
+  safePostToIframe({ type: 'axis-event', event: 'joystick:move', payload });
+});
+
 // if a second physical joystick is present, forward its quickmove too
 try {
   if (Axis.joystick2 && typeof Axis.joystick2.addEventListener === 'function') {
@@ -177,6 +184,13 @@ try {
       if (!gameStarted) return;
       const payload = { direction: ev?.direction, id: ev?.id || 2, joystick: 2 };
       safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
+    });
+
+    // forward joystick2 move events (analog) to iframe
+    Axis.joystick2.addEventListener('joystick:move', (ev) => {
+      if (!gameStarted) return;
+      const payload = { position: ev?.position || { x: 0, y: 0 }, id: ev?.id || 2, joystick: 2 };
+      safePostToIframe({ type: 'axis-event', event: 'joystick:move', payload });
     });
   }
 } catch (_) {}

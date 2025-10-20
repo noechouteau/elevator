@@ -82,6 +82,15 @@
 
     if (msg.event === 'joystick:quickmove') {
       handleJoystickQuickmove(msg.payload || {});
+    } else if (msg.event === 'joystick:move') {
+      try {
+        const p = msg.payload || {};
+        const pos = p.position || { x: 0, y: 0 };
+        // Dispatch a CustomEvent so the game can listen easily
+        window.dispatchEvent(new CustomEvent('axis:joystickmove', { detail: { position: pos, id: p.id, joystick: p.joystick } }));
+      } catch (err) {
+        console.warn('[iframe-bridge] error handling joystick:move', err);
+      }
     } else if (msg.event === 'keydown') {
       // If payload.code not provided, map from payload.key (single char) to expected codes
       const p = msg.payload || {};
