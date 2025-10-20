@@ -251,6 +251,19 @@ async function createSession(playerName) {
 
 async function backToElevator(){
   // Logique pour revenir à l'ascenseur
+  document.getElementById("gameIframe").style.zIndex="-1";
+  document.getElementById("openingVideo").style.zIndex="-1";
+  document.getElementById("openingVideo").currentTime = 0;
+  gsap.to(".videoBack", {duration: 1, opacity: 1});
+  gsap.to("#gameIframe", {duration: 1, opacity: 0});
+  setTimeout(()=>{
+    document.getElementById("container").style.display="flex";
+    gameStarted = false;
+    Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
+    Axis.addEventListener("keydown", keydownHandler);
+  },1000);
+
+
 }
 
 function launchGame(index) {
@@ -315,6 +328,10 @@ function launchGame(index) {
       gsap.to("#gameIframe", {duration: 1, opacity: 1});
     },500);
   },4000);
+
+  setTimeout(()=>{
+    backToElevator();
+  },8000);
 }
 
 // Expose helper to console for easier testing
