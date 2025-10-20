@@ -222,6 +222,28 @@ function launchGame(index) {
       const msg = messageQueue.shift();
       safePostToIframe(msg);
     }
+    // If iframe is same-origin, try injecting the bridge script automatically so games don't need to include it.
+    try {
+      if (gameFrameOrigin === window.location.origin) {
+        try {
+          const doc = iframe.contentDocument;
+          if (doc) {
+            const s = doc.createElement('script');
+            s.type = 'text/javascript';
+            s.src = '/src/iframe-bridge.js';
+            doc.head.appendChild(s);
+            console.log('Injected /src/iframe-bridge.js into iframe (same-origin)');
+          }
+        } catch (injErr) {
+          // fallback: might fail if iframe isn't fully ready for DOM injection yet
+          console.warn('Injection into iframe failed:', injErr);
+        }
+      } else {
+        console.log('Iframe is cross-origin; include iframe-bridge.js inside the game to receive parent messages.');
+      }
+    } catch (e) {
+      console.warn('Error while attempting to inject bridge:', e);
+    }
   };
   document.getElementById("container").style.display="none";
   document.getElementById("openingVideo").style.zIndex="10";
@@ -245,6 +267,9 @@ function launchGame(index) {
     },500);
   },4000);
 }
+
+// Expose helper to console for easier testing
+try { window.safePostToIframe = safePostToIframe; } catch (_) {}
 
 // --- AU CHARGEMENT ---
 loadScores(0);

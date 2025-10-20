@@ -32,6 +32,45 @@
     // You can extend mapping for left/right or custom actions
   }
 
+  function pasteTextIntoActiveElement(text) {
+    if (typeof text !== 'string') return;
+    const el = document.activeElement;
+    if (!el) return;
+
+    // input or textarea
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      const input = el;
+      const start = input.selectionStart || 0;
+      const end = input.selectionEnd || 0;
+      const value = input.value || '';
+      const newValue = value.slice(0, start) + text + value.slice(end);
+      input.value = newValue;
+      // set caret after pasted text
+      const caret = start + text.length;
+      try { input.setSelectionRange(caret, caret); } catch (e) {}
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+
+    // contenteditable
+    if (el.isContentEditable) {
+      const sel = window.getSelection();
+      if (!sel) return;
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const textNode = document.createTextNode(text);
+      range.insertNode(textNode);
+      // move caret after inserted node
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+  }
+
   window.addEventListener('message', (ev) => {
     // Optional: verify origin
     // if (ev.origin !== 'https://elevator-xi.vercel.app') return;
@@ -42,6 +81,9 @@
       handleJoystickQuickmove(msg.payload || {});
     } else if (msg.event === 'keydown') {
       dispatchKeyboardEvent(msg.payload || {});
+    } else if (msg.event === 'paste') {
+      // payload: { text: '...' }
+      pasteTextIntoActiveElement((msg.payload && msg.payload.text) || '');
     }
   });
 
