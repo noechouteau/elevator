@@ -4,6 +4,8 @@
 // converts simple axis events into synthetic keyboard events or custom callbacks.
 
 (function () {
+  // mark that bridge is installed
+  try { window.__iframe_bridge_installed = true; } catch (_) {}
   function dispatchKeyboardEvent({ key, code, keyCode, metaKey, ctrlKey, altKey, shiftKey }) {
     try {
       const ev = new KeyboardEvent('keydown', {
@@ -72,6 +74,7 @@
   }
 
   window.addEventListener('message', (ev) => {
+    try { console.log('[iframe-bridge] message received', ev.origin, ev.data); } catch(_) {}
     // Optional: verify origin
     // if (ev.origin !== 'https://elevator-xi.vercel.app') return;
     const msg = ev.data;

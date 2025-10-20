@@ -80,17 +80,20 @@ function safePostToIframe(message) {
   if (!iframe || !iframe.src) return;
   // queue messages until iframe has loaded to avoid origin mismatch errors
   if (!gameFrameLoaded) {
+    console.log('[parent] queueing message until iframe loaded', message);
     messageQueue.push(message);
     return;
   }
   try {
+    console.log('[parent] sending to iframe', { message, targetOrigin: gameFrameOrigin || '*' });
     iframe.contentWindow.postMessage(message, gameFrameOrigin || '*');
   } catch (err) {
     // If origin mismatch or any failure, retry with '*'
     try {
+      console.warn('[parent] send failed, retrying with *', err);
       iframe.contentWindow.postMessage(message, '*');
     } catch (err2) {
-      console.warn('postMessage failed:', err2);
+      console.error('[parent] postMessage failed (final):', err2);
     }
   }
 }
@@ -270,6 +273,7 @@ function launchGame(index) {
 
 // Expose helper to console for easier testing
 try { window.safePostToIframe = safePostToIframe; } catch (_) {}
+try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch(e){ console.error('testSendToIframe error', e);} }; } catch(_) {}
 
 // --- AU CHARGEMENT ---
 loadScores(0);
