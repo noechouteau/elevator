@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "axis-api": "github:gobelins-axis/axis-api",
+    "firebase": "^12.4.0",
     "gsap": "^3.13.0"
   }
 }
