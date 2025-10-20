@@ -46,6 +46,9 @@ const gameUrls = [
 ]
 
 let selectedButton=0;
+let gameFrameLoaded = false;
+let gameFrameOrigin = '*';
+const messageQueue = [];
 
 function joystickQuickmoveHandler(e) {
     console.log(e);
@@ -71,6 +74,30 @@ function joystickQuickmoveHandler(e) {
     console.log(selectedButton);
 }
 
+// Forward Axis events to iframe so embedded games can receive controls (safe, ignores cross-origin errors)
+function safePostToIframe(message) {
+  const iframe = document.getElementById("gameIframe");
+  if (!iframe || !iframe.src) return;
+  // queue messages until iframe has loaded to avoid origin mismatch errors
+  if (!gameFrameLoaded) {
+    console.log('[parent] queueing message until iframe loaded', message);
+    messageQueue.push(message);
+    return;
+  }
+  try {
+    console.log('[parent] sending to iframe', { message, targetOrigin: gameFrameOrigin || '*' });
+    iframe.contentWindow.postMessage(message, gameFrameOrigin || '*');
+  } catch (err) {
+    // If origin mismatch or any failure, retry with '*'
+    try {
+      console.warn('[parent] send failed, retrying with *', err);
+      iframe.contentWindow.postMessage(message, '*');
+    } catch (err2) {
+      console.error('[parent] postMessage failed (final):', err2);
+    }
+  }
+}
+
 function keydownHandler(e) {
   
   console.log(e);
@@ -82,6 +109,44 @@ function keydownHandler(e) {
 
 Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
 Axis.addEventListener("keydown", keydownHandler);
+
+// forward joystick quickmove events to iframe
+Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
+  if (!gameStarted) return;
+  // pick only serializable fields
+  const payload = { direction: ev?.direction };
+  safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
+});
+
+// forward keydown events to iframe (serialize only needed props)
+Axis.addEventListener('keydown', (ev) => {
+  if (!gameStarted) return;
+  const payload = {
+    key: ev?.key,
+    code: ev?.code,
+    keyCode: ev?.keyCode,
+    metaKey: !!ev?.metaKey,
+    ctrlKey: !!ev?.ctrlKey,
+    altKey: !!ev?.altKey,
+    shiftKey: !!ev?.shiftKey
+  };
+  safePostToIframe({ type: 'axis-event', event: 'keydown', payload });
+});
+
+// forward keyup events to iframe (serialize only needed props)
+Axis.addEventListener('keyup', (ev) => {
+  if (!gameStarted) return;
+  const payload = {
+    key: ev?.key,
+    code: ev?.code,
+    keyCode: ev?.keyCode,
+    metaKey: !!ev?.metaKey,
+    ctrlKey: !!ev?.ctrlKey,
+    altKey: !!ev?.altKey,
+    shiftKey: !!ev?.shiftKey
+  };
+  safePostToIframe({ type: 'axis-event', event: 'keyup', payload });
+});
 
 // --- RÉCUPÉRER LES TOP SCORES ---
 async function getTopScores(gameId) {
@@ -158,7 +223,46 @@ document.addEventListener("keydown", (e) => {
 });
 
 function launchGame(index) {
-  document.getElementById("gameIframe").src=gameUrls[index];
+  const iframe = document.getElementById("gameIframe");
+  gameFrameLoaded = false;
+  gameFrameOrigin = '*';
+  // set src then wait on load to flush queue
+  iframe.src = gameUrls[index];
+  iframe.onload = () => {
+    gameFrameLoaded = true;
+    try {
+      gameFrameOrigin = new URL(iframe.src, window.location.href).origin;
+    } catch (_) {
+      gameFrameOrigin = '*';
+    }
+    // flush queued messages
+    while (messageQueue.length) {
+      const msg = messageQueue.shift();
+      safePostToIframe(msg);
+    }
+    // If iframe is same-origin, try injecting the bridge script automatically so games don't need to include it.
+    try {
+      if (gameFrameOrigin === window.location.origin) {
+        try {
+          const doc = iframe.contentDocument;
+          if (doc) {
+            const s = doc.createElement('script');
+            s.type = 'text/javascript';
+            s.src = '/src/iframe-bridge.js';
+            doc.head.appendChild(s);
+            console.log('Injected /src/iframe-bridge.js into iframe (same-origin)');
+          }
+        } catch (injErr) {
+          // fallback: might fail if iframe isn't fully ready for DOM injection yet
+          console.warn('Injection into iframe failed:', injErr);
+        }
+      } else {
+        console.log('Iframe is cross-origin; include iframe-bridge.js inside the game to receive parent messages.');
+      }
+    } catch (e) {
+      console.warn('Error while attempting to inject bridge:', e);
+    }
+  };
   document.getElementById("container").style.display="none";
   document.getElementById("openingVideo").style.zIndex="10";
   document.getElementById("openingVideo").play();
@@ -172,15 +276,19 @@ function launchGame(index) {
     gsap.to(".videoBack", {duration: 1, opacity: 0});
     console.log("test");
     
-    document.getElementById("gameIframe").style.zIndex="10";
-    document.getElementById("gameIframe").click();
-    document.getElementById("gameIframe").focus();
-    document.getElementById("gameIframe").contentWindow.focus();
+  iframe.style.zIndex="10";
+  iframe.click();
+  iframe.focus();
+  try { iframe.contentWindow.focus(); } catch(_) {}
     setTimeout(()=>{
       gsap.to("#gameIframe", {duration: 1, opacity: 1});
     },500);
   },4000);
 }
+
+// Expose helper to console for easier testing
+try { window.safePostToIframe = safePostToIframe; } catch (_) {}
+try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch(e){ console.error('testSendToIframe error', e);} }; } catch(_) {}
 
 // --- AU CHARGEMENT ---
 loadScores(0);
