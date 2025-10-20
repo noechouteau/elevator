@@ -248,76 +248,9 @@ async function backToElevator(){
   // Logique pour revenir à l'ascenseur
 }
 
-
-
-// --- USERNAME OVERLAY & VIRTUAL KEYBOARD FLOW ---
-function initUsernameFlow() {
-  const overlay = document.getElementById("usernameOverlay");
-  const inputEl = document.getElementById("usernameInput");
-  const container = document.getElementById("container");
-  const right = document.getElementById("right-container");
-
-  // If username already exists, skip overlay
-  if (username && username.trim().length > 0) {
-    overlay?.classList.add("hidden");
-    container?.classList.remove("hidden");
-    right?.classList.remove("hidden");
-    return;
-  }
-
-  // Show overlay, hide the rest
-  overlay?.classList.remove("hidden");
-  container?.classList.add("hidden");
-  right?.classList.add("hidden");
-
-  // Ensure typing and Enter work immediately
-  setTimeout(() => {
-    try { inputEl?.focus(); inputEl?.select?.(); } catch {}
-  }, 0);
-
-  // Open Axis virtual keyboard
-  try {
-    Axis.virtualKeyboard.open();
-  } catch (e) {
-    console.warn("Axis.virtualKeyboard.open failed or not available", e);
-  }
-
-  // Mirror keyboard input into the field
-  const inputHandler = (value) => {
-    inputEl.value = value ?? "";
-  };
-
-  // Validate: save username, close keyboard, reveal UI
-  const validateHandler = async (value) => {
-    try {
-      username = (value || inputEl.value || "").trim();
-      if (!username) return;
-      localStorage.setItem("username", username);
-      try {
-        Axis.virtualKeyboard.close();
-        Axis.virtualKeyboard.removeEventListener("input", inputHandler);
-        Axis.virtualKeyboard.removeEventListener("validate", validateHandler);
-      } catch {}
-      overlay?.classList.add("hidden");
-      container?.classList.remove("hidden");
-      right?.classList.remove("hidden");
-    } catch (err) {
-      console.error("Validation failed:", err);
-    }
-  };
-
-  // Attach listeners
-  Axis.virtualKeyboard.addEventListener("input", inputHandler);
-  Axis.virtualKeyboard.addEventListener("validate", validateHandler);
-
-  // Fallback: allow Enter key on physical keyboard
-document.addEventListener("keydown", (e) => {
-  // Si overlay visible, on veut que Enter valide
-  if (!overlay.classList.contains("hidden") && e.key === "Enter") {
-    validateHandler();
-  }
-});
-}
+// Expose helper to console for easier testing
+try { window.safePostToIframe = safePostToIframe; } catch (_) {}
+try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch(e){ console.error('testSendToIframe error', e);} }; } catch(_) {}
 
 // --- AU CHARGEMENT ---
 loadScores(0);
