@@ -6,9 +6,9 @@
 (function () {
   // mark that bridge is installed
   try { window.__iframe_bridge_installed = true; } catch (_) {}
-  function dispatchKeyboardEvent({ key, code, keyCode, metaKey, ctrlKey, altKey, shiftKey }) {
+  function dispatchKeyboardEvent(type, { key, code, keyCode, metaKey, ctrlKey, altKey, shiftKey }) {
     try {
-      const ev = new KeyboardEvent('keydown', {
+      const ev = new KeyboardEvent(type || 'keydown', {
         key: key || '',
         code: code || '',
         keyCode: keyCode || 0,
@@ -83,7 +83,28 @@
     if (msg.event === 'joystick:quickmove') {
       handleJoystickQuickmove(msg.payload || {});
     } else if (msg.event === 'keydown') {
-      dispatchKeyboardEvent(msg.payload || {});
+      // If payload.code not provided, map from payload.key (single char) to expected codes
+      const p = msg.payload || {};
+      const mapping = {
+        'a': 'KeyQ', // axis 'a' corresponds to game KeyQ
+        'x': 'KeyS',
+        'i': 'KeyD',
+        's': 'KeyF'
+      };
+      const lowerKey = (p.key || '').toString().toLowerCase();
+      const code = p.code || mapping[lowerKey] || p.code || '';
+      dispatchKeyboardEvent('keydown', { key: p.key || '', code, keyCode: p.keyCode || 0, metaKey: p.metaKey, ctrlKey: p.ctrlKey, altKey: p.altKey, shiftKey: p.shiftKey });
+    } else if (msg.event === 'keyup') {
+      const p = msg.payload || {};
+      const mapping = {
+        'a': 'KeyQ',
+        'x': 'KeyS',
+        'i': 'KeyD',
+        's': 'KeyF'
+      };
+      const lowerKey = (p.key || '').toString().toLowerCase();
+      const code = p.code || mapping[lowerKey] || p.code || '';
+      dispatchKeyboardEvent('keyup', { key: p.key || '', code, keyCode: p.keyCode || 0, metaKey: p.metaKey, ctrlKey: p.ctrlKey, altKey: p.altKey, shiftKey: p.shiftKey });
     } else if (msg.event === 'paste') {
       // payload: { text: '...' }
       pasteTextIntoActiveElement((msg.payload && msg.payload.text) || '');

@@ -133,6 +133,21 @@ Axis.addEventListener('keydown', (ev) => {
   safePostToIframe({ type: 'axis-event', event: 'keydown', payload });
 });
 
+// forward keyup events to iframe (serialize only needed props)
+Axis.addEventListener('keyup', (ev) => {
+  if (!gameStarted) return;
+  const payload = {
+    key: ev?.key,
+    code: ev?.code,
+    keyCode: ev?.keyCode,
+    metaKey: !!ev?.metaKey,
+    ctrlKey: !!ev?.ctrlKey,
+    altKey: !!ev?.altKey,
+    shiftKey: !!ev?.shiftKey
+  };
+  safePostToIframe({ type: 'axis-event', event: 'keyup', payload });
+});
+
 // --- RÉCUPÉRER LES TOP SCORES ---
 async function getTopScores(gameId) {
   const q = query(
