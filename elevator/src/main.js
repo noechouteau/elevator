@@ -153,9 +153,9 @@ const images = [
 ];
 
 const gameUrls = [
-  "https://gamejame.vercel.app/",
-  "https://miamo.fun/",
   "https://gobelins-gamejam-2025.vercel.app/",
+  "https://miamo.fun/",
+  "https://gamejame.vercel.app/",
   "https://matias.me/nsfw/",
   "https://neal.fun/"
 ]
