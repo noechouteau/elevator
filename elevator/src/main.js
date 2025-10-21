@@ -154,10 +154,11 @@ const images = [
 
 const gameUrls = [
   "https://gobelins-gamejam-2025.vercel.app/",
-  "https://miamo.fun/",
-  "https://gamejame.vercel.app/",
-  "https://matias.me/nsfw/",
   "https://flippergj.vercel.app/",
+  "https://gamejame.vercel.app/",
+  "https://mathieu-a-un-grain.vercel.app/",
+  "https://new-tableau1.vercel.app/",
+  "https://gamejam-2025-gobelins-stage-3.netlify.app/",
 ]
 
 let selectedButton = 6;
