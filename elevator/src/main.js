@@ -188,21 +188,6 @@ Axis.virtualKeyboard.addEventListener("validate", (username) => {
     });
 });
 
-function keydownHandler(e) {
-  if (isTypingUsername) return; // 🚫 ignore les entrées Axis tant que le pseudo n’est pas validé
-  console.log(e);
-  if (gameStarted) return;
-  
-  if (e.key === "a" && !gameStarted && !scoreboardVisible) {
-    launchGame(selectedButton);
-  }
-
-  if (e.key === "x" && !gameStarted) {
-    toggleScoreboard();
-  }
-}
-
-
 function joystickQuickmoveHandler(e) {
     if (isTypingUsername) return; // 🚫 bloque pendant la saisie du pseudo
   console.log(e);
@@ -348,6 +333,7 @@ function safePostToIframe(message) {
 }
 
 function keydownHandler(e) {
+  if (isTypingUsername) return; // 🚫 ignore les entrées Axis tant que le pseudo n’est pas validé
   console.log(e);
   if (gameStarted) return;
   
@@ -359,7 +345,6 @@ function keydownHandler(e) {
     toggleScoreboard();
   }
 }
-
 Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
 Axis.addEventListener("keydown", keydownHandler);
 
