@@ -434,7 +434,7 @@ button:hover {
 
 #usernameContainer label {
   color: #fff;
-  font-size:3rem;
+  font-size:4vw;
   font-family: 'Boldonse', sans-serif;
   font-weight: 700;
   margin-bottom: 20px;
@@ -442,8 +442,8 @@ button:hover {
 
 #usernameContainer input {
   padding: 10px 15px;
-  margin-bottom: 20rem;
-  font-size: 1.5rem;
+  margin-bottom: 20vw;
+  font-size: 2vw;
   font-family: 'Boldonse', sans-serif;
   border: 2px solid #555;
   border-radius: 50px;
