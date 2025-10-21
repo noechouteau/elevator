@@ -308,9 +308,9 @@ function safePostToIframe(message) {
   }
   try {
     //si c joystick quickmove loguer rien
-    if (message.event !== 'joystick:move') {
+    // if (message.event !== 'joystick:move') {
     console.log('[parent] sending to iframe', { message, targetOrigin: gameFrameOrigin || '*' });
-    }
+    // }
     iframe.contentWindow.postMessage(message, gameFrameOrigin || '*');
   } catch (err) {
     try {
