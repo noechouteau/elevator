@@ -176,8 +176,16 @@ Axis.virtualKeyboard.addEventListener("input", (username) => {
 });
 
 Axis.virtualKeyboard.addEventListener("validate", (username) => {
+  // Récupère le vrai pseudo dans l’input
+  const finalUsername = document.querySelector("input#username").value.trim();
+
+  // Si Axis renvoie {enter}, on remplace par la valeur saisie
+  const cleanUsername = (username === "{enter}" || !username)
+    ? finalUsername
+    : username;
+
   Axis.virtualKeyboard.close();
-  createSession(username);
+  createSession(cleanUsername);
 
   // Bloque les entrées pendant un court instant
   isTypingUsername = true;
@@ -193,6 +201,7 @@ Axis.virtualKeyboard.addEventListener("validate", (username) => {
     }
   });
 });
+
 
 
 function joystickQuickmoveHandler(e) {
