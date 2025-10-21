@@ -14,6 +14,8 @@ Ce document décrit le protocole simple que le parent (l'ascenseur) utilise pour
 
 Contexte
 --------
+
+
 Le lanceur (fichier `elevator/src/main.js`) capte les événements Axis (hardware) et les sérialise puis les envoie dans l'iframe via `window.postMessage`. Certains jeux sont hébergés sur le même domaine que le lanceur (same-origin) et peuvent recevoir automatiquement un petit script "bridge" injecté (`/src/iframe-bridge.js`). Pour les jeux cross-origin, il est nécessaire d'implémenter un listener `message` côté jeu.
 
 Contrat minimal (inputs / outputs)
@@ -36,7 +38,6 @@ Exemples de payloads
 --------------------
 - keydown / keyup
   - payload.key : chaîne (ex: 'a1', 'x2') — la lettre de la touche *suffixée* par l'id du contrôleur quand disponible
-  - payload.code : e.code (ex: 'KeyA')
   - payload.keyCode : e.keyCode (numérique)
   - payload.id : id numérique du contrôleur (1, 2...)
   - payload.metaKey / ctrlKey / altKey / shiftKey : bool
@@ -178,5 +179,25 @@ Fichiers concernés
 - `elevator/src/main.js` : envoi (safePostToIframe, suffixing des keys)
 - `elevator/src/iframe-bridge.js` : (optionnel) bridge injection côté jeu
 - `gamejam/src/script.js` : exemple de réception et parsing
+
+
+Déclencher le retour à l'ascenseur depuis votre jeu
+===================================================
+
+Pour revenir à l'écran principal de l'ascenseur depuis votre jeu, envoyez ce message au parent :
+
+```javascript
+window.parent.postMessage({ type: 'elevator-command', action: 'backToElevator' }, '*');
+```
+
+- Format du message :
+  ```javascript
+  {
+    type: 'elevator-command',
+    action: 'backToElevator'
+  }
+  ```
+- Il est recommandé de remplacer '*' par l'origine exacte du parent pour plus de sécurité.
+- Le launcher (parent) écoute ce message et déclenche la fonction `backToElevator()`.
 
 Fin.

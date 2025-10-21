@@ -639,5 +639,26 @@ try { window.safePostToIframe = safePostToIframe; } catch (_) {}
 try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch(e){ console.error('testSendToIframe error', e);} }; } catch(_) {}
 try { window.toggleScoreboard = toggleScoreboard; } catch (_) {}
 
+// Receive commands from iframe games. Example message to trigger return:
+// { type: 'elevator-command', action: 'backToElevator' }
+window.addEventListener('message', (ev) => {
+  const msg = ev.data;
+  if (!msg || typeof msg !== 'object') return;
+  if (msg.type !== 'elevator-command') return;
+
+  // Best-effort origin check: if gameFrameOrigin is known, require it
+  try {
+    if (gameFrameOrigin && gameFrameOrigin !== '*' && ev.origin !== gameFrameOrigin) {
+      console.warn('[parent] ignored elevator-command from unknown origin', ev.origin);
+      return;
+    }
+  } catch (_) {}
+
+  if (msg.action === 'backToElevator') {
+    console.log('[parent] received backToElevator command from iframe');
+    try { backToElevator(); } catch (err) { console.error('backToElevator error', err); }
+  }
+});
+
 // --- AU CHARGEMENT ---
 loadScores(0);
