@@ -83,10 +83,10 @@ async function addScore(gameId, playerName, score) {
     createdAt: Timestamp.now()
   });
   console.log(`✅ Score ajouté pour ${playerName} (${score})`);
-  
+
   // Poster aussi sur le leaderboard Axis
   await leaderboard.PostScore(score, playerName, gameId.toString().padStart(2, '0'));
-  
+
   loadScores(gameId); // recharge le classement
 }
 
@@ -115,7 +115,7 @@ async function loadScores(gameId) {
     const gameIdString = gameId.toString().padStart(2, '0');
     const scores = leaderboard.filterTopScoresByGameID(allScores, gameIdString, 8);
     console.log("✅ Scores filtrés pour ce jeu:", scores);
-    
+
     leaderboardContent.innerHTML = "";
 
     if (scores.length === 0) {
@@ -160,7 +160,7 @@ const gameUrls = [
   "https://flippergj.vercel.app/",
 ]
 
-let selectedButton=0;
+let selectedButton = 6;
 let gameFrameLoaded = false;
 let gameFrameOrigin = '*';
 const messageQueue = [];
@@ -171,25 +171,25 @@ const input = document.querySelector("input#username");
 Axis.virtualKeyboard.open();
 
 Axis.virtualKeyboard.addEventListener("input", (username) => {
-    input.value = username;
+  input.value = username;
 });
 
 Axis.virtualKeyboard.addEventListener("validate", (username) => {
-    Axis.virtualKeyboard.close();
-    createSession(username);
-    gsap.to("#usernameContainer", {
-      duration: 0.5,
-      opacity: 0,
-      onComplete: () => {
-        document.getElementById("usernameContainer").style.display = "none";
-      }
-    });
+  Axis.virtualKeyboard.close();
+  createSession(username);
+  gsap.to("#usernameContainer", {
+    duration: 0.5,
+    opacity: 0,
+    onComplete: () => {
+      document.getElementById("usernameContainer").style.display = "none";
+    }
+  });
 });
 
 function joystickQuickmoveHandler(e) {
   console.log(e);
   if (gameStarted) return;
-  
+
   // Si le scoreboard est visible, naviguer entre les game-icons
   if (scoreboardVisible) {
     if (e.direction === "left") {
@@ -203,27 +203,56 @@ function joystickQuickmoveHandler(e) {
         updateGameIcons();
       }
     }
-    return; // Important: sortir de la fonction après avoir géré gauche/droite
+    return;
+  }
+
+  // Navigation normale entre les étages
+  // Index 0 = ground, Index 1-6 = jeu1 à jeu6
+  if (e.direction === "up") {
+    if (selectedButton < 6) {
+      // Retirer la classe active du bouton actuel
+      const currentBtn = getButtonById(selectedButton);
+      if (currentBtn) currentBtn.classList.remove("activeCircle");
+      
+      selectedButton++;
+      
+      // Ajouter la classe active au nouveau bouton
+      const nextBtn = getButtonById(selectedButton);
+      if (nextBtn) nextBtn.classList.add("activeCircle");
+      
+      // Ne pas charger les scores pour ground (index 0)
+      if (selectedButton > 0) {
+        loadScores(selectedButton - 1); // -1 car les jeux vont de 0 à 5
+      }
+    }
   }
   
-  // Sinon, navigation normale entre les étages
-  if (e.direction === "up"){
-    if(selectedButton>0){
+  if (e.direction === "down") {
+    if (selectedButton > 0) {
+      // Retirer la classe active du bouton actuel
+      const currentBtn = getButtonById(selectedButton);
+      if (currentBtn) currentBtn.classList.remove("activeCircle");
+      
       selectedButton--;
-      loadScores(selectedButton);
-      document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
-      document.getElementById("jeu"+(selectedButton+2)+"bouton").classList.remove("hovered");
+      
+      // Ajouter la classe active au nouveau bouton
+      const nextBtn = getButtonById(selectedButton);
+      if (nextBtn) nextBtn.classList.add("activeCircle");
+      
+      // Ne pas charger les scores pour ground (index 0)
+      if (selectedButton > 0) {
+        loadScores(selectedButton - 1); // -1 car les jeux vont de 0 à 5
+      }
     }
   }
-  if (e.direction === "down"){
-    if(selectedButton<5){
-      selectedButton++;
-      loadScores(selectedButton);
-      document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
-      document.getElementById("jeu"+(selectedButton)+"bouton").classList.remove("hovered");
-    }
-  }
-  console.log(selectedButton);
+  
+  console.log("Selected button:", selectedButton);
+}
+
+// Fonction helper pour obtenir le bouton par index
+function getButtonById(index) {
+  const buttonIds = ["ground", "jeu1bouton", "jeu2bouton", "jeu3bouton", "jeu4bouton", "jeu5bouton", "jeu6bouton"];
+  return document.getElementById(buttonIds[index]);
 }
 
 // Ajouter cette variable en haut avec les autres variables
@@ -239,7 +268,7 @@ function updateGameIcons() {
       icon.classList.remove("active");
     }
   });
-  
+
   // Charger les scores du jeu sélectionné
   loadScores(selectedGameIcon);
 }
@@ -252,7 +281,7 @@ function toggleScoreboard() {
   const scoreContainer = document.getElementById("scoreContainer");
   const overlay = document.getElementById("modalOverlay");
   const leaderboardCommande = document.querySelector(".leaderboardCommande");
-  
+
   if (scoreboardVisible) {
     // Cacher le scoreboard, l'overlay et les commandes
     gsap.to("#scoreContainer", {
@@ -282,20 +311,20 @@ function toggleScoreboard() {
     overlay.style.display = "block";
     scoreContainer.style.display = "flex";
     leaderboardCommande.style.display = "flex";
-    
+
     // Réinitialiser à la première icône
     selectedGameIcon = 0;
     updateGameIcons();
-    
-    gsap.fromTo("#modalOverlay", 
+
+    gsap.fromTo("#modalOverlay",
       { opacity: 0 },
       { duration: 0.3, opacity: 1 }
     );
-    gsap.fromTo("#scoreContainer", 
+    gsap.fromTo("#scoreContainer",
       { opacity: 0, scale: 0.9 },
       { duration: 0.3, opacity: 1, scale: 1 }
     );
-    gsap.fromTo(".leaderboardCommande", 
+    gsap.fromTo(".leaderboardCommande",
       { opacity: 0, scale: 0.9 },
       { duration: 0.3, opacity: 1, scale: 1 }
     );
@@ -334,7 +363,12 @@ function keydownHandler(e) {
   if (gameStarted) return;
   
   if (e.key === "a" && !gameStarted && !scoreboardVisible) {
-    launchGame(selectedButton);
+    // TODO: Implémenter l'action pour ground (quitter, retour menu, etc.)
+    if (selectedButton === 0) {
+      console.log("Ground button pressed - action à implémenter");
+      return;
+    }
+    launchGame(selectedButton - 1); // -1 car les jeux vont de 0 à 5
   }
 
   if (e.key === "x" && !gameStarted) {
@@ -386,7 +420,7 @@ try {
       }
     });
   }
-} catch (_) {}
+} catch (_) { }
 
 // forward keydown events to iframe (serialize only needed props)
 Axis.addEventListener('keydown', (ev) => {
@@ -434,22 +468,22 @@ let lastButtonStates = {};
 
 function checkGamepad() {
   const gamepads = navigator.getGamepads();
-  
+
   for (let i = 0; i < gamepads.length; i++) {
     const gamepad = gamepads[i];
     if (!gamepad) continue;
-    
+
     if (!lastButtonStates[i]) {
       lastButtonStates[i] = {};
     }
-    
+
     gamepad.buttons.forEach((button, index) => {
       const wasPressed = lastButtonStates[i][index];
       const isPressed = button.pressed;
-      
+
       if (isPressed && !wasPressed) {
         console.log(`Bouton ${index} pressé`);
-        
+
         if (index === 2) {
           keydownHandler({ key: "x" });
         }
@@ -457,39 +491,39 @@ function checkGamepad() {
           keydownHandler({ key: "a" });
         }
       }
-      
+
       lastButtonStates[i][index] = isPressed;
     });
-    
+
     const threshold = 0.5;
-    
+
     // Stick gauche vertical (navigation étages)
     const leftStickY = gamepad.axes[1];
-    
+
     if (leftStickY < -threshold && !lastButtonStates[i].upPressed) {
       joystickQuickmoveHandler({ direction: "up" });
       lastButtonStates[i].upPressed = true;
     } else if (leftStickY > -threshold) {
       lastButtonStates[i].upPressed = false;
     }
-    
+
     if (leftStickY > threshold && !lastButtonStates[i].downPressed) {
       joystickQuickmoveHandler({ direction: "down" });
       lastButtonStates[i].downPressed = true;
     } else if (leftStickY < threshold) {
       lastButtonStates[i].downPressed = false;
     }
-    
+
     // Stick gauche horizontal (navigation game-icons quand scoreboard visible)
     const leftStickX = gamepad.axes[0];
-    
+
     if (leftStickX < -threshold && !lastButtonStates[i].leftPressed) {
       joystickQuickmoveHandler({ direction: "left" });
       lastButtonStates[i].leftPressed = true;
     } else if (leftStickX > -threshold) {
       lastButtonStates[i].leftPressed = false;
     }
-    
+
     if (leftStickX > threshold && !lastButtonStates[i].rightPressed) {
       joystickQuickmoveHandler({ direction: "right" });
       lastButtonStates[i].rightPressed = true;
@@ -497,7 +531,7 @@ function checkGamepad() {
       lastButtonStates[i].rightPressed = false;
     }
   }
-  
+
   requestAnimationFrame(checkGamepad);
 }
 
@@ -513,23 +547,43 @@ document.getElementById("addScoreBtn")?.addEventListener("click", () => {
 });
 
 const floorButtons = [
-  { id: "jeu1bouton", gameIndex: 0 },
-  { id: "currentFloor", gameIndex: 1 },
-  { id: "jeu3bouton", gameIndex: 2 },
-  { id: "jeu4bouton", gameIndex: 3 },
-  { id: "jeu5bouton", gameIndex: 4 },
-  { id: "jeu6bouton", gameIndex: 5 }
+  { id: "ground", gameIndex: 0 },
+  { id: "jeu1bouton", gameIndex: 1 },
+  { id: "jeu2bouton", gameIndex: 2 },
+  { id: "jeu3bouton", gameIndex: 3 },
+  { id: "jeu4bouton", gameIndex: 4 },
+  { id: "jeu5bouton", gameIndex: 5 },
+  { id: "jeu6bouton", gameIndex: 6 }
 ];
 
 floorButtons.forEach(({ id, gameIndex }) => {
   const button = document.getElementById(id);
   if (button) {
     button.addEventListener("mouseover", () => {
-      loadScores(gameIndex);
+      // Retirer activeCircle de tous les boutons
+      document.querySelectorAll(".circle").forEach(btn => {
+        if (!btn.classList.contains("completed")) {
+          btn.classList.remove("activeCircle");
+        }
+      });
+      
+      // Ajouter activeCircle au bouton survolé
+      button.classList.add("activeCircle");
       selectedButton = gameIndex;
+      
+      // Ne pas charger les scores pour ground (index 0)
+      if (gameIndex > 0) {
+        loadScores(gameIndex - 1); // -1 car les jeux vont de 0 à 5
+      }
     });
+    
     button.addEventListener("click", () => {
-      launchGame(gameIndex);
+      // TODO: Implémenter l'action pour ground (quitter, retour menu, etc.)
+      if (gameIndex === 0) {
+        console.log("Ground button clicked - action à implémenter");
+        return;
+      }
+      launchGame(gameIndex - 1); // -1 car les jeux vont de 0 à 5
     });
   }
 });
@@ -559,7 +613,7 @@ async function createSession(playerName) {
     console.log("✅ Session créée avec ID :", docRef.id);
     testId = docRef.id;
   });
-  
+
   const ref = doc(db, "sessions", testId);
 
   onSnapshot(ref, (docSnap) => {
@@ -583,15 +637,15 @@ async function setAllLedsWhite() {
   } catch (err) { console.error('Erreur setAllLedsWhite', err); }
 }
 
-async function backToElevator(){
+async function backToElevator() {
   const iframe = document.getElementById("gameIframe");
   // Stoppe le jeu et tous les sons en réinitialisant l'iframe
   iframe.src = "about:blank";
   iframe.style.zIndex = "-1";
   document.getElementById("openingVideo").style.zIndex = "-1";
   document.getElementById("openingVideo").currentTime = 0;
-  gsap.to(".videoBack", {duration: 1, opacity: 1});
-  gsap.to("#gameIframe", {duration: 1, opacity: 0});
+  gsap.to(".videoBack", { duration: 1, opacity: 1 });
+  gsap.to("#gameIframe", { duration: 1, opacity: 0 });
 
   // LEDs blanches au retour ascenseur
   setAllLedsWhite();
@@ -599,13 +653,13 @@ async function backToElevator(){
   // Fade in des contrôles
   gsap.to("#right-container", { duration: 0.5, opacity: 1, delay: 0.5 });
   gsap.to(".bottomLeft", { duration: 0.5, opacity: 1, delay: 0.5 });
-  
-  setTimeout(()=>{
-    document.getElementById("container").style.display="flex";
+
+  setTimeout(() => {
+    document.getElementById("container").style.display = "flex";
     gameStarted = false;
     Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
     Axis.addEventListener("keydown", keydownHandler);
-  },1000);
+  }, 1000);
 }
 
 function launchGame(index) {
@@ -650,31 +704,31 @@ function launchGame(index) {
       console.warn('Error while attempting to inject bridge:', e);
     }
   };
-  document.getElementById("container").style.display="none";
-  document.getElementById("openingVideo").style.zIndex="10";
+  document.getElementById("container").style.display = "none";
+  document.getElementById("openingVideo").style.zIndex = "10";
   document.getElementById("openingVideo").play();
 
   Axis.joystick1.removeEventListener("joystick:quickmove", joystickQuickmoveHandler);
   Axis.removeEventListener("keydown", keydownHandler);
-  
+
   gameStarted = true;
-  setTimeout(()=>{
-    gsap.to(".videoBack", {duration: 1, opacity: 0});
-    
-    iframe.style.zIndex="10";
+  setTimeout(() => {
+    gsap.to(".videoBack", { duration: 1, opacity: 0 });
+
+    iframe.style.zIndex = "10";
     iframe.click();
     iframe.focus();
-    try { iframe.contentWindow.focus(); } catch(_) {}
-    setTimeout(()=>{
-      gsap.to("#gameIframe", {duration: 1, opacity: 1});
-    },500);
-  },4000);
+    try { iframe.contentWindow.focus(); } catch (_) { }
+    setTimeout(() => {
+      gsap.to("#gameIframe", { duration: 1, opacity: 1 });
+    }, 500);
+  }, 4000);
 }
 
 // Expose helper to console for easier testing
-try { window.safePostToIframe = safePostToIframe; } catch (_) {}
-try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch(e){ console.error('testSendToIframe error', e);} }; } catch(_) {}
-try { window.toggleScoreboard = toggleScoreboard; } catch (_) {}
+try { window.safePostToIframe = safePostToIframe; } catch (_) { }
+try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch (e) { console.error('testSendToIframe error', e); } }; } catch (_) { }
+try { window.toggleScoreboard = toggleScoreboard; } catch (_) { }
 
 // Receive commands from iframe games. Example message to trigger return:
 // { type: 'elevator-command', action: 'backToElevator' }
@@ -689,7 +743,7 @@ window.addEventListener('message', (ev) => {
       console.warn('[parent] ignored elevator-command from unknown origin', ev.origin);
       return;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   if (msg.action === 'backToElevator') {
     console.log('[parent] received backToElevator command from iframe');
