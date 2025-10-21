@@ -157,7 +157,7 @@ const gameUrls = [
   "https://miamo.fun/",
   "https://gamejame.vercel.app/",
   "https://matias.me/nsfw/",
-  "https://neal.fun/"
+  "https://flippergj.vercel.app/",
 ]
 
 let selectedButton=0;
