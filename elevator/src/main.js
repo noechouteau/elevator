@@ -165,6 +165,7 @@ let gameFrameLoaded = false;
 let gameFrameOrigin = '*';
 const messageQueue = [];
 let finishedGames = [];
+let isTypingUsername = true; // dès le début, l’utilisateur doit entrer son pseudo
 
 const input = document.querySelector("input#username");
 
@@ -177,6 +178,7 @@ Axis.virtualKeyboard.addEventListener("input", (username) => {
 Axis.virtualKeyboard.addEventListener("validate", (username) => {
     Axis.virtualKeyboard.close();
     createSession(username);
+    isTypingUsername = false; // 👈 active les contrôles après la saisie
     gsap.to("#usernameContainer", {
       duration: 0.5,
       opacity: 0,
@@ -186,7 +188,23 @@ Axis.virtualKeyboard.addEventListener("validate", (username) => {
     });
 });
 
+function keydownHandler(e) {
+  if (isTypingUsername) return; // 🚫 ignore les entrées Axis tant que le pseudo n’est pas validé
+  console.log(e);
+  if (gameStarted) return;
+  
+  if (e.key === "a" && !gameStarted && !scoreboardVisible) {
+    launchGame(selectedButton);
+  }
+
+  if (e.key === "x" && !gameStarted) {
+    toggleScoreboard();
+  }
+}
+
+
 function joystickQuickmoveHandler(e) {
+    if (isTypingUsername) return; // 🚫 bloque pendant la saisie du pseudo
   console.log(e);
   if (gameStarted) return;
   
@@ -433,6 +451,11 @@ window.addEventListener("gamepadconnected", (e) => {
 let lastButtonStates = {};
 
 function checkGamepad() {
+    if (isTypingUsername) {
+    requestAnimationFrame(checkGamepad);
+    return; // ignore les entrées de manette tant que l’utilisateur tape son pseudo
+  }
+
   const gamepads = navigator.getGamepads();
   
   for (let i = 0; i < gamepads.length; i++) {
