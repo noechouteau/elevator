@@ -176,17 +176,24 @@ Axis.virtualKeyboard.addEventListener("input", (username) => {
 });
 
 Axis.virtualKeyboard.addEventListener("validate", (username) => {
-    Axis.virtualKeyboard.close();
-    createSession(username);
-    isTypingUsername = false; // 👈 active les contrôles après la saisie
-    gsap.to("#usernameContainer", {
-      duration: 0.5,
-      opacity: 0,
-      onComplete: () => {
-        document.getElementById("usernameContainer").style.display = "none";
-      }
-    });
+  Axis.virtualKeyboard.close();
+  createSession(username);
+
+  // Bloque les entrées pendant un court instant
+  isTypingUsername = true;
+  gsap.to("#usernameContainer", {
+    duration: 0.5,
+    opacity: 0,
+    onComplete: () => {
+      document.getElementById("usernameContainer").style.display = "none";
+      // Réactive les contrôles un peu après la fermeture
+      setTimeout(() => {
+        isTypingUsername = false;
+      }, 600); // délai anti double input
+    }
+  });
 });
+
 
 function joystickQuickmoveHandler(e) {
     if (isTypingUsername) return; // 🚫 bloque pendant la saisie du pseudo
