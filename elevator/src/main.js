@@ -556,8 +556,11 @@ async function createSession(playerName) {
 }
 
 async function backToElevator(){
-  document.getElementById("gameIframe").style.zIndex="-1";
-  document.getElementById("openingVideo").style.zIndex="-1";
+  const iframe = document.getElementById("gameIframe");
+  // Stoppe le jeu et tous les sons en réinitialisant l'iframe
+  iframe.src = "about:blank";
+  iframe.style.zIndex = "-1";
+  document.getElementById("openingVideo").style.zIndex = "-1";
   document.getElementById("openingVideo").currentTime = 0;
   gsap.to(".videoBack", {duration: 1, opacity: 1});
   gsap.to("#gameIframe", {duration: 1, opacity: 0});
