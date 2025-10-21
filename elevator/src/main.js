@@ -14,6 +14,66 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+// --- LEADERBOARD CLASS ---
+class Leaderboard {
+  constructor() {
+    this.leaderboard = null;
+    this.scores = null;
+    this.createLeaderboard();
+  }
+
+  createLeaderboard() {
+    this.leaderboard = Axis.createLeaderboard({
+      id: import.meta.env.VITE_GLOBALGAME_ID,
+    });
+  }
+
+  async PostScore(score, name, gameID) {
+    try {
+      await this.leaderboard
+        .postScore({
+          username: name,
+          gameID: gameID,
+          value: score,
+        })
+        .then(() => {
+          this.leaderboard.getScores().then((response) => {
+            this.scores = response;
+          });
+        });
+    } catch (error) {
+      console.error("Error posting score to leaderboard:", error);
+      throw error;
+    }
+  }
+
+  async getScores() {
+    try {
+      const scores = await this.leaderboard.getScores();
+      console.log("scores", scores);
+      this.scores = scores;
+      return scores;
+    } catch (error) {
+      console.error("Error fetching leaderboard scores:", error);
+      throw error;
+    }
+  }
+
+  filterTopScores(scores, topN = 10) {
+    return scores.sort((a, b) => b.value - a.value).slice(0, topN);
+  }
+
+  filterTopScoresByGameID(scores, gameID, topN = 5) {
+    return scores
+      .filter((score) => score.gameID === gameID)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, topN);
+  }
+}
+
+// Initialiser le leaderboard
+const leaderboard = new Leaderboard();
+
 // --- AJOUTER UN SCORE ---
 async function addScore(gameId, playerName, score) {
   await addDoc(collection(db, "highscores"), {
@@ -23,7 +83,62 @@ async function addScore(gameId, playerName, score) {
     createdAt: Timestamp.now()
   });
   console.log(`✅ Score ajouté pour ${playerName} (${score})`);
+  
+  // Poster aussi sur le leaderboard Axis
+  await leaderboard.PostScore(score, playerName, gameId.toString().padStart(2, '0'));
+  
   loadScores(gameId); // recharge le classement
+}
+
+// --- RÉCUPÉRER LES TOP SCORES ---
+async function getTopScores(gameId) {
+  const q = query(
+    collection(db, "highscores"),
+    where("gameId", "==", gameId),
+    orderBy("score", "desc"),
+    limit(10)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data());
+}
+
+// --- AFFICHER LES SCORES DANS LE DOM ---
+async function loadScores(gameId) {
+  const leaderboardContent = document.getElementById("leaderboardContent");
+  leaderboardContent.innerHTML = "<div class='leaderboard-row'><div class='rank-name'><span class='player-name'>Chargement...</span></div></div>";
+
+  try {
+    // Récupérer les scores du leaderboard Axis
+    const allScores = await leaderboard.getScores();
+    console.log("📊 Tous les scores:", allScores);
+    console.log("🎮 GameID recherché:", gameId.toString().padStart(2, '0'));
+    const gameIdString = gameId.toString().padStart(2, '0');
+    const scores = leaderboard.filterTopScoresByGameID(allScores, gameIdString, 8);
+    console.log("✅ Scores filtrés pour ce jeu:", scores);
+    
+    leaderboardContent.innerHTML = "";
+
+    if (scores.length === 0) {
+      leaderboardContent.innerHTML = "<div class='leaderboard-row'><div class='rank-name'><span class='player-name'>Aucun score pour l'instant</span></div></div>";
+      return;
+    }
+
+    scores.forEach((s, i) => {
+      const row = document.createElement("div");
+      row.className = "leaderboard-row";
+      row.innerHTML = `
+        <div class="rank-name">
+          <span class="rank">${i + 1}</span>
+          <span class="player-name">${s.username}</span>
+        </div>
+        <span class="score">${s.value.toLocaleString()} PTS</span>
+      `;
+      leaderboardContent.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Error loading scores:", error);
+    leaderboardContent.innerHTML = "<div class='leaderboard-row'><div class='rank-name'><span class='player-name'>Erreur de chargement</span></div></div>";
+  }
 }
 
 let gameStarted = false;
@@ -39,12 +154,11 @@ const images = [
 
 const gameUrls = [
   "https://gamejame.vercel.app/",
-  "https://stake.bet/fr",
+  "https://gobelins-gamejam-2025.vercel.app/",
   "https://miamo.fun/",
   "https://matias.me/nsfw/",
-  "https://neal.fun/",
-  "https://flippergj.vercel.app/"
-];
+  "https://neal.fun/"
+]
 
 let selectedButton=0;
 let gameFrameLoaded = false;
@@ -60,37 +174,67 @@ const input = document.querySelector("input#username");
 //     input.value = username;
 // });
 
-// Axis.virtualKeyboard.addEventListener("validate", (username) => {
-//     Axis.virtualKeyboard.close(); // ✅ corrige la référence
-//     // leaderboard.postScore({
-//     //     username,
-//     //     value: 100098796,
-//     // });
-//     createSession(username);
-// });
+Axis.virtualKeyboard.addEventListener("validate", (username) => {
+    Axis.virtualKeyboard.close();
+    createSession(username);
+});
 
 function joystickQuickmoveHandler(e) {
-    console.log(e);
-    if (gameStarted) return;
-    if (e.direction === "up"){
-      if(selectedButton>0){
-        selectedButton--;
-        loadScores(selectedButton);
-        document.getElementById("previewImage").src=images[selectedButton];
-        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
-        document.getElementById("jeu"+(selectedButton+2)+"bouton").classList.remove("hovered");
+  console.log(e);
+  if (gameStarted) return;
+  
+  // Si le scoreboard est visible, naviguer entre les game-icons
+  if (scoreboardVisible) {
+    if (e.direction === "left") {
+      if (selectedGameIcon > 0) {
+        selectedGameIcon--;
+        updateGameIcons();
+      }
+    } else if (e.direction === "right") {
+      if (selectedGameIcon < 5) {
+        selectedGameIcon++;
+        updateGameIcons();
       }
     }
-    if (e.direction === "down"){
-      if(selectedButton<5){
-        selectedButton++;
-        loadScores(selectedButton);
-        document.getElementById("previewImage").src=images[selectedButton];
-        document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
-        document.getElementById("jeu"+(selectedButton)+"bouton").classList.remove("hovered");
-      }
-    };
-    console.log(selectedButton);
+    return; // Important: sortir de la fonction après avoir géré gauche/droite
+  }
+  
+  // Sinon, navigation normale entre les étages
+  if (e.direction === "up"){
+    if(selectedButton>0){
+      selectedButton--;
+      loadScores(selectedButton);
+      document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
+      document.getElementById("jeu"+(selectedButton+2)+"bouton").classList.remove("hovered");
+    }
+  }
+  if (e.direction === "down"){
+    if(selectedButton<5){
+      selectedButton++;
+      loadScores(selectedButton);
+      document.getElementById("jeu"+(selectedButton+1)+"bouton").classList.add("hovered");
+      document.getElementById("jeu"+(selectedButton)+"bouton").classList.remove("hovered");
+    }
+  }
+  console.log(selectedButton);
+}
+
+// Ajouter cette variable en haut avec les autres variables
+let selectedGameIcon = 0; // Index du game-icon sélectionné (0-5)
+
+// Fonction pour mettre à jour l'affichage des game-icons
+function updateGameIcons() {
+  const gameIcons = document.querySelectorAll(".game-icon");
+  gameIcons.forEach((icon, index) => {
+    if (index === selectedGameIcon) {
+      icon.classList.add("active");
+    } else {
+      icon.classList.remove("active");
+    }
+  });
+  
+  // Charger les scores du jeu sélectionné
+  loadScores(selectedGameIcon);
 }
 
 // Variable pour tracker l'état du scoreboard
@@ -99,9 +243,11 @@ let scoreboardVisible = false;
 // Fonction pour toggle le scoreboard
 function toggleScoreboard() {
   const scoreContainer = document.getElementById("scoreContainer");
+  const overlay = document.getElementById("modalOverlay");
+  const leaderboardCommande = document.querySelector(".leaderboardCommande");
   
   if (scoreboardVisible) {
-    // Cacher le scoreboard
+    // Cacher le scoreboard, l'overlay et les commandes
     gsap.to("#scoreContainer", {
       duration: 0.3,
       opacity: 0,
@@ -109,11 +255,40 @@ function toggleScoreboard() {
         scoreContainer.style.display = "none";
       }
     });
+    gsap.to("#modalOverlay", {
+      duration: 0.3,
+      opacity: 0,
+      onComplete: () => {
+        overlay.style.display = "none";
+      }
+    });
+    gsap.to(".leaderboardCommande", {
+      duration: 0.3,
+      opacity: 0,
+      onComplete: () => {
+        leaderboardCommande.style.display = "none";
+      }
+    });
     scoreboardVisible = false;
   } else {
-    // Afficher le scoreboard
+    // Afficher l'overlay, le scoreboard et les commandes
+    overlay.style.display = "block";
     scoreContainer.style.display = "flex";
+    leaderboardCommande.style.display = "flex";
+    
+    // Réinitialiser à la première icône
+    selectedGameIcon = 0;
+    updateGameIcons();
+    
+    gsap.fromTo("#modalOverlay", 
+      { opacity: 0 },
+      { duration: 0.3, opacity: 1 }
+    );
     gsap.fromTo("#scoreContainer", 
+      { opacity: 0, scale: 0.9 },
+      { duration: 0.3, opacity: 1, scale: 1 }
+    );
+    gsap.fromTo(".leaderboardCommande", 
       { opacity: 0, scale: 0.9 },
       { duration: 0.3, opacity: 1, scale: 1 }
     );
@@ -121,11 +296,11 @@ function toggleScoreboard() {
   }
 }
 
+
 // Forward Axis events to iframe so embedded games can receive controls (safe, ignores cross-origin errors)
 function safePostToIframe(message) {
   const iframe = document.getElementById("gameIframe");
   if (!iframe || !iframe.src) return;
-  // queue messages until iframe has loaded to avoid origin mismatch errors
   if (!gameFrameLoaded) {
     console.log('[parent] queueing message until iframe loaded', message);
     messageQueue.push(message);
@@ -135,7 +310,6 @@ function safePostToIframe(message) {
     console.log('[parent] sending to iframe', { message, targetOrigin: gameFrameOrigin || '*' });
     iframe.contentWindow.postMessage(message, gameFrameOrigin || '*');
   } catch (err) {
-    // If origin mismatch or any failure, retry with '*'
     try {
       console.warn('[parent] send failed, retrying with *', err);
       iframe.contentWindow.postMessage(message, '*');
@@ -146,11 +320,10 @@ function safePostToIframe(message) {
 }
 
 function keydownHandler(e) {
-  
   console.log(e);
   if (gameStarted) return;
   
-  if (e.key === "a" && !gameStarted) {
+  if (e.key === "a" && !gameStarted && !scoreboardVisible) {
     launchGame(selectedButton);
   }
 
@@ -165,7 +338,6 @@ Axis.addEventListener("keydown", keydownHandler);
 // forward joystick quickmove events to iframe
 Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
   if (!gameStarted) return;
-  // pick only serializable fields
   const payload = { direction: ev?.direction, id: ev?.id || 1, joystick: 1 };
   safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
 });
@@ -201,7 +373,6 @@ Axis.addEventListener('keydown', (ev) => {
   const controllerId = ev?.id || '';
   const rawKey = (ev?.key || '');
   const payload = {
-    // suffix key with controller id so parent sends 'a1' or 'a2'
     key: controllerId ? `${rawKey}${controllerId}` : rawKey,
     code: ev?.code,
     keyCode: ev?.keyCode,
@@ -232,62 +403,115 @@ Axis.addEventListener('keyup', (ev) => {
   safePostToIframe({ type: 'axis-event', event: 'keyup', payload });
 });
 
-// --- RÉCUPÉRER LES TOP SCORES ---
-async function getTopScores(gameId) {
-  const q = query(
-    collection(db, "highscores"),
-    where("gameId", "==", gameId),
-    orderBy("score", "desc"),
-    limit(10)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => doc.data());
-}
 
-// --- AFFICHER LES SCORES DANS LE DOM ---
-async function loadScores(gameId) {
-  const tbody = document.querySelector("#scoreTable tbody");
-  tbody.innerHTML = "<tr><td colspan='3'>Chargement...</td></tr>";
+// Écouter les événements de la manette Xbox (Gamepad API)
+window.addEventListener("gamepadconnected", (e) => {
+  console.log("Manette connectée:", e.gamepad);
+});
 
-  const scores = await getTopScores(gameId);
-  tbody.innerHTML = ""; // clear
+let lastButtonStates = {};
 
-  if (scores.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='3'>Aucun score pour l’instant</td></tr>";
-    return;
+function checkGamepad() {
+  const gamepads = navigator.getGamepads();
+  
+  for (let i = 0; i < gamepads.length; i++) {
+    const gamepad = gamepads[i];
+    if (!gamepad) continue;
+    
+    if (!lastButtonStates[i]) {
+      lastButtonStates[i] = {};
+    }
+    
+    gamepad.buttons.forEach((button, index) => {
+      const wasPressed = lastButtonStates[i][index];
+      const isPressed = button.pressed;
+      
+      if (isPressed && !wasPressed) {
+        console.log(`Bouton ${index} pressé`);
+        
+        if (index === 2) {
+          keydownHandler({ key: "x" });
+        }
+        if (index === 0) {
+          keydownHandler({ key: "a" });
+        }
+      }
+      
+      lastButtonStates[i][index] = isPressed;
+    });
+    
+    const threshold = 0.5;
+    
+    // Stick gauche vertical (navigation étages)
+    const leftStickY = gamepad.axes[1];
+    
+    if (leftStickY < -threshold && !lastButtonStates[i].upPressed) {
+      joystickQuickmoveHandler({ direction: "up" });
+      lastButtonStates[i].upPressed = true;
+    } else if (leftStickY > -threshold) {
+      lastButtonStates[i].upPressed = false;
+    }
+    
+    if (leftStickY > threshold && !lastButtonStates[i].downPressed) {
+      joystickQuickmoveHandler({ direction: "down" });
+      lastButtonStates[i].downPressed = true;
+    } else if (leftStickY < threshold) {
+      lastButtonStates[i].downPressed = false;
+    }
+    
+    // Stick gauche horizontal (navigation game-icons quand scoreboard visible)
+    const leftStickX = gamepad.axes[0];
+    
+    if (leftStickX < -threshold && !lastButtonStates[i].leftPressed) {
+      joystickQuickmoveHandler({ direction: "left" });
+      lastButtonStates[i].leftPressed = true;
+    } else if (leftStickX > -threshold) {
+      lastButtonStates[i].leftPressed = false;
+    }
+    
+    if (leftStickX > threshold && !lastButtonStates[i].rightPressed) {
+      joystickQuickmoveHandler({ direction: "right" });
+      lastButtonStates[i].rightPressed = true;
+    } else if (leftStickX < threshold) {
+      lastButtonStates[i].rightPressed = false;
+    }
   }
-
-  scores.forEach((s, i) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${s.playerName}</td>
-      <td>${s.score}</td>
-    `;
-    tbody.appendChild(row);
-  });
+  
+  requestAnimationFrame(checkGamepad);
 }
+
+requestAnimationFrame(checkGamepad);
 
 // --- ÉVÉNEMENT : AJOUT SCORE ALÉATOIRE ---
-document.getElementById("addScoreBtn").addEventListener("click", () => {
-  console.log("Ajout d’un score aléatoire...");
+document.getElementById("addScoreBtn")?.addEventListener("click", () => {
+  console.log("Ajout d'un score aléatoire...");
   const randomScore = Math.floor(Math.random() * 10000);
   const randomPlayer = "Player" + Math.floor(Math.random() * 100);
-  const randomGameId = Math.floor(Math.random() * 6); // 0 à 5
+  const randomGameId = Math.floor(Math.random() * 6);
   addScore(randomGameId, randomPlayer, randomScore);
 });
 
-for(let i=1;i<=6;i++){
-  document.getElementById("jeu"+i+"bouton")
-  .addEventListener("mouseover",()=>{
-    loadScores(i-1);
-    document.getElementById("previewImage").src=images[i-1];
-    selectedButton=i-1;
-  });
-  document.getElementById("jeu"+i+"bouton").addEventListener("click",()=>{
-    launchGame(i-1);
-  });
-}
+const floorButtons = [
+  { id: "jeu1bouton", gameIndex: 0 },
+  { id: "currentFloor", gameIndex: 1 },
+  { id: "jeu3bouton", gameIndex: 2 },
+  { id: "jeu4bouton", gameIndex: 3 },
+  { id: "jeu5bouton", gameIndex: 4 },
+  { id: "jeu6bouton", gameIndex: 5 }
+];
+
+floorButtons.forEach(({ id, gameIndex }) => {
+  const button = document.getElementById(id);
+  if (button) {
+    button.addEventListener("mouseover", () => {
+      loadScores(gameIndex);
+      selectedButton = gameIndex;
+    });
+    button.addEventListener("click", () => {
+      launchGame(gameIndex);
+    });
+  }
+});
 
 //appeler joystickQuickmoveHandler quand flèche haut ou bas pressée
 document.addEventListener("keydown", (e) => {
@@ -297,7 +521,7 @@ document.addEventListener("keydown", (e) => {
     joystickQuickmoveHandler({ direction: "down" });
   } else if (e.key === "Enter") {
     keydownHandler({ key: "a" });
-  } else if (e.key === "x") {
+  } else if (e.key === "x" || e.key === "X" || e.key === "l" || e.key === "L") {
     keydownHandler({ key: "x" });
   } else if (e.key === "i") {
     keydownHandler({ key: "i" });
@@ -322,9 +546,6 @@ async function createSession(playerName) {
       console.log("💡 Document mis à jour :", docSnap.data());
       finishedGames = docSnap.data().finishedGames || [];
       console.log("Finished games mis à jour :", finishedGames);
-
-      // Mettre à jour les boutons de jeu en fonction des finishedGames
-
     } else {
       console.log("⚠️ Document supprimé ou inexistant");
     }
@@ -332,28 +553,34 @@ async function createSession(playerName) {
 }
 
 async function backToElevator(){
-  // Logique pour revenir à l'ascenseur
   document.getElementById("gameIframe").style.zIndex="-1";
   document.getElementById("openingVideo").style.zIndex="-1";
   document.getElementById("openingVideo").currentTime = 0;
   gsap.to(".videoBack", {duration: 1, opacity: 1});
   gsap.to("#gameIframe", {duration: 1, opacity: 0});
+
+  // Fade in des contrôles
+  gsap.to("#right-container", { duration: 0.5, opacity: 1, delay: 0.5 });
+  gsap.to(".bottomLeft", { duration: 0.5, opacity: 1, delay: 0.5 });
+  
   setTimeout(()=>{
     document.getElementById("container").style.display="flex";
     gameStarted = false;
     Axis.joystick1.addEventListener("joystick:quickmove", joystickQuickmoveHandler);
     Axis.addEventListener("keydown", keydownHandler);
   },1000);
-
-
 }
 
 function launchGame(index) {
   const iframe = document.getElementById("gameIframe");
   gameFrameLoaded = false;
   gameFrameOrigin = '*';
-  // set src then wait on load to flush queue
   iframe.src = gameUrls[index];
+
+  // Fade out des contrôles
+  gsap.to("#right-container", { duration: 0.5, opacity: 0 });
+  gsap.to(".bottomLeft", { duration: 0.5, opacity: 0 });
+
   iframe.onload = () => {
     gameFrameLoaded = true;
     try {
@@ -361,12 +588,10 @@ function launchGame(index) {
     } catch (_) {
       gameFrameOrigin = '*';
     }
-    // flush queued messages
     while (messageQueue.length) {
       const msg = messageQueue.shift();
       safePostToIframe(msg);
     }
-    // If iframe is same-origin, try injecting the bridge script automatically so games don't need to include it.
     try {
       if (gameFrameOrigin === window.location.origin) {
         try {
@@ -379,7 +604,6 @@ function launchGame(index) {
             console.log('Injected /src/iframe-bridge.js into iframe (same-origin)');
           }
         } catch (injErr) {
-          // fallback: might fail if iframe isn't fully ready for DOM injection yet
           console.warn('Injection into iframe failed:', injErr);
         }
       } else {
@@ -392,7 +616,6 @@ function launchGame(index) {
   document.getElementById("container").style.display="none";
   document.getElementById("openingVideo").style.zIndex="10";
   document.getElementById("openingVideo").play();
-  console.log(Axis.joystick1.removeEventListener);
 
   Axis.joystick1.removeEventListener("joystick:quickmove", joystickQuickmoveHandler);
   Axis.removeEventListener("keydown", keydownHandler);
@@ -400,25 +623,21 @@ function launchGame(index) {
   gameStarted = true;
   setTimeout(()=>{
     gsap.to(".videoBack", {duration: 1, opacity: 0});
-    console.log("test");
     
-  iframe.style.zIndex="10";
-  iframe.click();
-  iframe.focus();
-  try { iframe.contentWindow.focus(); } catch(_) {}
+    iframe.style.zIndex="10";
+    iframe.click();
+    iframe.focus();
+    try { iframe.contentWindow.focus(); } catch(_) {}
     setTimeout(()=>{
       gsap.to("#gameIframe", {duration: 1, opacity: 1});
     },500);
   },4000);
-
-  // setTimeout(()=>{
-  //   backToElevator();
-  // },8000);
 }
 
 // Expose helper to console for easier testing
 try { window.safePostToIframe = safePostToIframe; } catch (_) {}
 try { window.testSendToIframe = (m) => { try { safePostToIframe(m); } catch(e){ console.error('testSendToIframe error', e);} }; } catch(_) {}
+try { window.toggleScoreboard = toggleScoreboard; } catch (_) {}
 
 // --- AU CHARGEMENT ---
 loadScores(0);

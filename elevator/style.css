@@ -12,8 +12,45 @@ body {
 
 .bottomLeft {
   position: fixed;
-  bottom: 0;
-  left: 0;
+  bottom: 50px;
+  left: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  opacity: 1;
+  transition: opacity 0.5s ease; 
+}
+
+.bottomLeftRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.bottomLeftRow button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottomLeftRow span {
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bottomLeftRow img,
+.bottomLeftRow svg {
+  width: 42px;
+  height: 42px;
 }
 
 h1 {
@@ -71,7 +108,20 @@ button:hover {
   object-fit: contain;
 }
 
+#modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1;
+  pointer-events: none;
+  display: none;
+}
+
 #scoreContainer {
+  z-index: 2;
   background-image: url('/public/leaderBoard.svg');
   background-size: cover;
   background-position: center;
@@ -82,12 +132,49 @@ button:hover {
   flex-direction: column;
   align-items: center;
   min-width: 600px;
+  min-height: 700px;
   position: relative;
+  transform: translateY(-50px);
 }
 
 .leaderboardTitle {
   font-size: 45px;
   color: #FBB32E;
+}
+
+.game-icons {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.game-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(87, 87, 87, 1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.game-icon.active {
+  border-color: #ffffff;
+}
+
+.game-icon.active img {
+  /* Actif: blanc */
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+.game-icon img {
+  width: 26px;
+  height: 26px;
+  filter: brightness(0) saturate(100%) invert(34%) sepia(0%) saturate(0%) hue-rotate(155deg) brightness(92%) contrast(86%);
+  transition: filter 0.3s ease;
 }
 
 /* Leaderboard Table */
@@ -105,8 +192,23 @@ button:hover {
   transition: background 0.3s;
 }
 
-.leaderboard-row:hover {
-  background: rgba(255, 153, 0, 0.1);
+.leaderboard-row:nth-child(1) .rank,
+.leaderboard-row:nth-child(1) .player-name {
+  color: rgba(251, 179, 46, 1);
+}
+
+.leaderboard-row:nth-child(2) .rank,
+.leaderboard-row:nth-child(2) .player-name {
+  color: rgba(217, 217, 217, 1);
+}
+
+.leaderboard-row:nth-child(3) .rank,
+.leaderboard-row:nth-child(3) .player-name {
+  color: rgba(246, 153, 110, 1);
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
 }
 
 .rank-name {
@@ -117,7 +219,7 @@ button:hover {
 }
 
 .rank {
-  color: #ff9900;
+  color: #ffffff;
   font-weight: bold;
   font-size: 28px;
 }
@@ -136,8 +238,25 @@ button:hover {
 }
 
 .leaderboardCommande {
+  position: fixed;
+  bottom: 50px;
+  display: none;
+  justify-content: space-between;
+  width: 38%;
+  font-size: 20px;
+  font-weight: 400;
+  z-index: 3;
+}
+
+.leaderboardInstruction {
   display: flex;
-  width: 100%;
+  align-items: center;
+  gap: 20px;
+}
+
+.leaderboardInstructionImage {
+  width: 35px;
+  height: 35px;
 }
 
 #container {
@@ -158,6 +277,8 @@ button:hover {
   display: flex;
   justify-content: center;
   align-items: center;
+  opacity: 1;
+  transition: opacity 0.5s ease;
 }
 
 #floorsButtons {
@@ -215,11 +336,21 @@ button:hover {
   transform: scale(1.05);
 }
 
-.circle.active {
-  border-color: #33ff33;
+.circle.activeCircle {
+  border-color: #ffffff;
   box-shadow:
-    0 0 30px rgba(51, 255, 51, 0.8),
-    inset 0 0 15px rgba(0, 0, 0, 0.9);
+    0 0 30px rgba(255, 255, 255, 0.9),
+    inset 0 0 12px rgba(255,255,255,0.06);
+}
+
+.circle.activeCircle img {
+  /* filtre pour rendre l'image blanche; selon ton svg/png tu peux ajuster */
+  filter: brightness(0) saturate(100%) invert(100%) !important;
+}
+
+/* petite transition pour douceur */
+.circle img {
+  transition: filter 0.18s ease, transform 0.12s ease;
 }
 
 .circle.active::before {
