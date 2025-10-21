@@ -168,15 +168,22 @@ let finishedGames = [];
 
 const input = document.querySelector("input#username");
 
-// Axis.virtualKeyboard.open();
+Axis.virtualKeyboard.open();
 
-// Axis.virtualKeyboard.addEventListener("input", (username) => {
-//     input.value = username;
-// });
+Axis.virtualKeyboard.addEventListener("input", (username) => {
+    input.value = username;
+});
 
 Axis.virtualKeyboard.addEventListener("validate", (username) => {
     Axis.virtualKeyboard.close();
     createSession(username);
+    gsap.to("#usernameContainer", {
+      duration: 0.5,
+      opacity: 0,
+      onComplete: () => {
+        document.getElementById("usernameContainer").style.display = "none";
+      }
+    });
 });
 
 function joystickQuickmoveHandler(e) {

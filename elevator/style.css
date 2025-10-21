@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Boldonse&family=Geist:wght@100..900&display=swap');
+
 body {
-  font-family: sans-serif;
+  font-family: 'Geist', sans-serif;
   background: #111;
   color: #fff;
   display: flex;
@@ -391,4 +393,44 @@ button:hover {
   background: radial-gradient(circle at center,
       rgba(100, 100, 100, 0.2) 0%,
       rgba(100, 100, 100, 0) 70%);
+}
+
+/* username */
+#usernameContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-transform: uppercase;
+}
+
+#usernameContainer label {
+  color: #fff;
+  font-size:3rem;
+  font-family: 'Boldonse', sans-serif;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+#usernameContainer input {
+  padding: 10px 15px;
+  margin-bottom: 20rem;
+  font-size: 1.5rem;
+  font-family: 'Boldonse', sans-serif;
+  border: 2px solid #555;
+  border-radius: 8px;
+  background-color: #222;
+  color: #fff;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+#allContainer, #right-container, #imageAndButtons, #container, .bottomLeft {
+  z-index: -1;
 }
