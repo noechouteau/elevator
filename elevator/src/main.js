@@ -345,11 +345,17 @@ Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
   safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
 });
 
-// forward joystick move events (analog) to iframe
+// forward joystick move events (analog) to iframe UNIQUEMENT si x ou y a changé
+let lastJoystickMove = { 1: { x: null, y: null }, 2: { x: null, y: null } };
 Axis.joystick1.addEventListener('joystick:move', (ev) => {
   if (!gameStarted) return;
-  const payload = { position: ev?.position || { x: 0, y: 0 }, id: ev?.id || 1, joystick: 1 };
-  safePostToIframe({ type: 'axis-event', event: 'joystick:move', payload });
+  const pos = ev?.position || { x: 0, y: 0 };
+  const id = ev?.id || 1;
+  if (lastJoystickMove[1].x !== pos.x || lastJoystickMove[1].y !== pos.y) {
+    lastJoystickMove[1] = { x: pos.x, y: pos.y };
+    const payload = { position: pos, id, joystick: 1 };
+    safePostToIframe({ type: 'axis-event', event: 'joystick:move', payload });
+  }
 });
 
 // if a second physical joystick is present, forward its quickmove too
@@ -361,11 +367,16 @@ try {
       safePostToIframe({ type: 'axis-event', event: 'joystick:quickmove', payload });
     });
 
-    // forward joystick2 move events (analog) to iframe
+    // forward joystick2 move events (analog) to iframe UNIQUEMENT si x ou y a changé
     Axis.joystick2.addEventListener('joystick:move', (ev) => {
       if (!gameStarted) return;
-      const payload = { position: ev?.position || { x: 0, y: 0 }, id: ev?.id || 2, joystick: 2 };
-      safePostToIframe({ type: 'axis-event', event: 'joystick:move', payload });
+      const pos = ev?.position || { x: 0, y: 0 };
+      const id = ev?.id || 2;
+      if (lastJoystickMove[2].x !== pos.x || lastJoystickMove[2].y !== pos.y) {
+        lastJoystickMove[2] = { x: pos.x, y: pos.y };
+        const payload = { position: pos, id, joystick: 2 };
+        safePostToIframe({ type: 'axis-event', event: 'joystick:move', payload });
+      }
     });
   }
 } catch (_) {}
