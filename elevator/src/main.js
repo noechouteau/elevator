@@ -555,6 +555,16 @@ async function createSession(playerName) {
   });
 }
 
+async function setAllLedsWhite() {
+  try {
+    if (Axis.ledManager && Array.isArray(Axis.ledManager.leds)) {
+      Axis.ledManager.leds.forEach(led => {
+        if (led && typeof led.setColor === 'function') led.setColor('white');
+      });
+    }
+  } catch (err) { console.error('Erreur setAllLedsWhite', err); }
+}
+
 async function backToElevator(){
   const iframe = document.getElementById("gameIframe");
   // Stoppe le jeu et tous les sons en réinitialisant l'iframe
@@ -564,6 +574,9 @@ async function backToElevator(){
   document.getElementById("openingVideo").currentTime = 0;
   gsap.to(".videoBack", {duration: 1, opacity: 1});
   gsap.to("#gameIframe", {duration: 1, opacity: 0});
+
+  // LEDs blanches au retour ascenseur
+  setAllLedsWhite();
 
   // Fade in des contrôles
   gsap.to("#right-container", { duration: 0.5, opacity: 1, delay: 0.5 });
@@ -664,7 +677,23 @@ window.addEventListener('message', (ev) => {
     console.log('[parent] received backToElevator command from iframe');
     try { backToElevator(); } catch (err) { console.error('backToElevator error', err); }
   }
+  // Contrôle des LEDs depuis le jeu
+  if (msg.action === 'setLeds' && typeof msg.color === 'string') {
+    try {
+      if (Axis.ledManager && Array.isArray(Axis.ledManager.leds)) {
+        Axis.ledManager.leds.forEach(led => {
+          if (led && typeof led.setColor === 'function') {
+            led.setColor(msg.color);
+          }
+        });
+        console.log(`[parent] LEDs set to color: ${msg.color}`);
+      }
+    } catch (err) {
+      console.error('Erreur setLeds via postMessage', err);
+    }
+  }
 });
 
 // --- AU CHARGEMENT ---
 loadScores(0);
+setAllLedsWhite();

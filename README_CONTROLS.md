@@ -181,6 +181,7 @@ Fichiers concernés
 - `gamejam/src/script.js` : exemple de réception et parsing
 
 
+
 Déclencher le retour à l'ascenseur depuis votre jeu
 ===================================================
 
@@ -199,5 +200,19 @@ window.parent.postMessage({ type: 'elevator-command', action: 'backToElevator' }
   ```
 - Il est recommandé de remplacer '*' par l'origine exacte du parent pour plus de sécurité.
 - Le launcher (parent) écoute ce message et déclenche la fonction `backToElevator()`.
+
+
+Contrôler les LEDs de l'ascenseur depuis votre jeu
+==================================================
+
+Pour changer la couleur de toutes les LEDs de l'ascenseur depuis votre jeu, envoyez ce message au parent :
+
+```javascript
+window.parent.postMessage({ type: 'elevator-command', action: 'setLeds', color: 'white' }, '*');
+```
+
+- Remplacez 'white' par n'importe quelle couleur CSS valide (ex : 'red', '#00ff00', 'rgb(0,0,255)').
+- Le parent applique la couleur à toutes les LEDs via l'API Axis.
+- Le parent écoute ce message et applique la couleur immédiatement.
 
 Fin.
