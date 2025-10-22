@@ -1,18 +1,5 @@
-import { db } from "./firebase.js";
 import Axis from "axis-api";
 import { gsap } from "gsap";
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-  Timestamp,
-  doc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // --- LEADERBOARD CLASS ---
 class Leaderboard {
@@ -545,25 +532,18 @@ document.addEventListener("keydown", (e) => {
 });
 
 async function createSession(playerName) {
-  let testId = "";
-  await addDoc(collection(db, "sessions"), {
-    playerName,
-  }).then((docRef) => {
-    console.log("✅ Session créée avec ID :", docRef.id);
-    testId = docRef.id;
-  });
-  
-  const ref = doc(db, "sessions", testId);
+  window.addEventListener('message', (event) => {
+  if( !gameUrls.includes(event.origin) ) return;
 
-  onSnapshot(ref, (docSnap) => {
-    if (docSnap.exists()) {
-      console.log("💡 Document mis à jour :", docSnap.data());
-      finishedGames = docSnap.data().finishedGames || [];
-      console.log("Finished games mis à jour :", finishedGames);
-    } else {
-      console.log("⚠️ Document supprimé ou inexistant");
+  console.log('Message reçu depuis l’iframe :', event.data);
+
+  if (event.data.action === 'update' && event.data.score > 300000) {
+    // Faire quelque chose avec event.data.data.value
+    if (!finishedGames.includes(event.data.gameIndex)) {
+      finishedGames.push(event.data.gameIndex);
     }
-  });
+  }
+});
 }
 
 async function setAllLedsWhite() {
@@ -627,6 +607,7 @@ function launchGame(index) {
         try {
           const doc = iframe.contentDocument;
           if (doc) {
+            iframe.contentWindow.postMessage({ type: "STARTED" }, "*");
             const s = doc.createElement('script');
             s.type = 'text/javascript';
             s.src = '/src/iframe-bridge.js';
