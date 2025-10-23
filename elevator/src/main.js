@@ -629,13 +629,13 @@ async function createSession(playerName) {
 
     console.log('Message reçu depuis l’iframe :', event.data);
 
-    if (event.data.action === 'update' && event.data.score > 300000) {
-      // Faire quelque chose avec event.data.data.value
-      if (!finishedGames.includes(event.data.gameIndex)) {
-        finishedGames.push(event.data.gameIndex);
-      }
+  if (event.data.action === 'update' && event.data.score > 30000) {
+    // Faire quelque chose avec event.data.data.value
+    if (!finishedGames.includes(event.data.gameIndex)) {
+      finishedGames.push(event.data.gameIndex);
     }
-  });
+  }
+});
 }
 
 async function setAllLedsWhite() {

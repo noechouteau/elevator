@@ -179,6 +179,11 @@ button:hover {
   transition: filter 0.3s ease;
 }
 
+.game-icon:nth-child(6) img {
+  width: 30px;
+  height: 30px;
+}
+
 /* Leaderboard Table */
 .leaderboard {
   width: 100%;
@@ -275,6 +280,7 @@ button:hover {
 /* Right Section */
 #right-container {
   position: absolute;
+  /* TODO */
   top: 28%;
   right: 12.9%;
   transform: translateY(-50%);
@@ -334,6 +340,7 @@ button:hover {
 
 /* SVG rouge par défaut */
 .circle img {
+  /* TODO */
   width: 20px;
   height: 20px;
   filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(2843%) hue-rotate(349deg) brightness(92%) contrast(92%);
@@ -377,6 +384,11 @@ button:hover {
   stroke: rgba(230, 51, 54, 1);
   stroke-width: 3;
   fill: none;
+}
+
+.circle:nth-child(1) svg {
+  width: 30px;
+  height: 30px;
 }
 
 #currentFloor {
