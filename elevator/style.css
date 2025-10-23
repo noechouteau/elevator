@@ -281,7 +281,7 @@ button:hover {
 #right-container {
   position: absolute;
   /* TODO */
-  top: 34.5%;
+  top: 34%;
   right: 12.9%;
   transform: translateY(-50%);
   display: flex;
