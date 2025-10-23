@@ -157,7 +157,13 @@ let isTypingUsername = true; // dès le début, l’utilisateur doit entrer son 
 
 const input = document.querySelector("input#username");
 
-Axis.virtualKeyboard.open();
+let skipMenuName = true;
+
+if (skipMenuName) {
+  isTypingUsername = false;
+} else {
+  Axis.virtualKeyboard.open();
+}
 
 Axis.virtualKeyboard.addEventListener("input", (username) => {
   input.value = username;
@@ -193,7 +199,7 @@ Axis.virtualKeyboard.addEventListener("validate", (username) => {
 
 
 function joystickQuickmoveHandler(e) {
-    if (isTypingUsername) return; // 🚫 bloque pendant la saisie du pseudo
+  if (isTypingUsername) return; // 🚫 bloque pendant la saisie du pseudo
   console.log(e);
   if (gameStarted) return;
 
@@ -220,39 +226,39 @@ function joystickQuickmoveHandler(e) {
       // Retirer la classe active du bouton actuel
       const currentBtn = getButtonById(selectedButton);
       if (currentBtn) currentBtn.classList.remove("activeCircle");
-      
+
       selectedButton++;
-      
+
       // Ajouter la classe active au nouveau bouton
       const nextBtn = getButtonById(selectedButton);
       if (nextBtn) nextBtn.classList.add("activeCircle");
-      
+
       // Ne pas charger les scores pour ground (index 0)
       if (selectedButton > 0) {
         loadScores(selectedButton - 1); // -1 car les jeux vont de 0 à 5
       }
     }
   }
-  
+
   if (e.direction === "down") {
     if (selectedButton > 0) {
       // Retirer la classe active du bouton actuel
       const currentBtn = getButtonById(selectedButton);
       if (currentBtn) currentBtn.classList.remove("activeCircle");
-      
+
       selectedButton--;
-      
+
       // Ajouter la classe active au nouveau bouton
       const nextBtn = getButtonById(selectedButton);
       if (nextBtn) nextBtn.classList.add("activeCircle");
-      
+
       // Ne pas charger les scores pour ground (index 0)
       if (selectedButton > 0) {
         loadScores(selectedButton - 1); // -1 car les jeux vont de 0 à 5
       }
     }
   }
-  
+
   console.log("Selected button:", selectedButton);
 }
 
@@ -369,7 +375,7 @@ function keydownHandler(e) {
   if (isTypingUsername) return; // 🚫 ignore les entrées Axis tant que le pseudo n’est pas validé
   console.log(e);
   if (gameStarted) return;
-  
+
   if (e.key === "a" && !gameStarted && !scoreboardVisible) {
     // TODO: Implémenter l'action pour ground (quitter, retour menu, etc.)
     if (selectedButton === 0) {
@@ -474,7 +480,7 @@ window.addEventListener("gamepadconnected", (e) => {
 let lastButtonStates = {};
 
 function checkGamepad() {
-    if (isTypingUsername) {
+  if (isTypingUsername) {
     requestAnimationFrame(checkGamepad);
     return; // ignore les entrées de manette tant que l’utilisateur tape son pseudo
   }
@@ -578,17 +584,17 @@ floorButtons.forEach(({ id, gameIndex }) => {
           btn.classList.remove("activeCircle");
         }
       });
-      
+
       // Ajouter activeCircle au bouton survolé
       button.classList.add("activeCircle");
       selectedButton = gameIndex;
-      
+
       // Ne pas charger les scores pour ground (index 0)
       if (gameIndex > 0) {
         loadScores(gameIndex - 1); // -1 car les jeux vont de 0 à 5
       }
     });
-    
+
     button.addEventListener("click", () => {
       // TODO: Implémenter l'action pour ground (quitter, retour menu, etc.)
       if (gameIndex === 0) {
@@ -619,17 +625,17 @@ document.addEventListener("keydown", (e) => {
 
 async function createSession(playerName) {
   window.addEventListener('message', (event) => {
-  if( !gameUrls.includes(event.origin) ) return;
+    if (!gameUrls.includes(event.origin)) return;
 
-  console.log('Message reçu depuis l’iframe :', event.data);
+    console.log('Message reçu depuis l’iframe :', event.data);
 
-  if (event.data.action === 'update' && event.data.score > 300000) {
-    // Faire quelque chose avec event.data.data.value
-    if (!finishedGames.includes(event.data.gameIndex)) {
-      finishedGames.push(event.data.gameIndex);
+    if (event.data.action === 'update' && event.data.score > 300000) {
+      // Faire quelque chose avec event.data.data.value
+      if (!finishedGames.includes(event.data.gameIndex)) {
+        finishedGames.push(event.data.gameIndex);
+      }
     }
-  }
-});
+  });
 }
 
 async function setAllLedsWhite() {
