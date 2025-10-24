@@ -401,6 +401,8 @@ Axis.joystick1.addEventListener('joystick:quickmove', (ev) => {
 
 // forward joystick move events (analog) to iframe UNIQUEMENT si x ou y a changé
 let lastJoystickMove = { 1: { x: null, y: null }, 2: { x: null, y: null } };
+// Track forwarded keydowns to avoid duplicates: key = `${controllerId}:${key}`
+const forwardedKeydowns = new Set();
 Axis.joystick1.addEventListener('joystick:move', (ev) => {
   if (!gameStarted) return;
   const pos = ev?.position || { x: 0, y: 0 };
@@ -439,7 +441,11 @@ try {
 Axis.addEventListener('keydown', (ev) => {
   if (!gameStarted) return;
   const controllerId = ev?.id || '';
-  const rawKey = (ev?.key || '');
+  const rawKey = (ev?.key || '').toString().toLowerCase();
+  const idKey = `${controllerId}:${rawKey}`;
+  // If we've already forwarded a keydown for this key/controller, ignore duplicates
+  if (forwardedKeydowns.has(idKey)) return;
+  forwardedKeydowns.add(idKey);
   const payload = {
     key: controllerId ? `${rawKey}${controllerId}` : rawKey,
     code: ev?.code,
@@ -457,7 +463,11 @@ Axis.addEventListener('keydown', (ev) => {
 Axis.addEventListener('keyup', (ev) => {
   if (!gameStarted) return;
   const controllerId = ev?.id || '';
-  const rawKey = (ev?.key || '');
+  const rawKey = (ev?.key || '').toString().toLowerCase();
+  const idKey = `${controllerId}:${rawKey}`;
+  // Only forward keyup if we previously forwarded the keydown
+  if (!forwardedKeydowns.has(idKey)) return;
+  forwardedKeydowns.delete(idKey);
   const payload = {
     key: controllerId ? `${rawKey}${controllerId}` : rawKey,
     code: ev?.code,
