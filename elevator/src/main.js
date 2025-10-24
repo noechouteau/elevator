@@ -141,7 +141,7 @@ const images = [
 
 const gameUrls = [
   "https://gobelins-gamejam-2025.vercel.app/",
-  "https://gamejam-flipper.vercel.app/",
+  "https://flippergj.vercel.app/",
   "https://gamejame.vercel.app/",
   "https://mathieu-a-un-grain.vercel.app/",
   "https://new-tableau1.vercel.app/",
