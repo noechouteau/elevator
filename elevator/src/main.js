@@ -157,7 +157,7 @@ let isTypingUsername = true; // dès le début, l’utilisateur doit entrer son 
 
 const input = document.querySelector("input#username");
 
-let skipMenuName = true;
+let skipMenuName = false;
 
 if (skipMenuName) {
   isTypingUsername = false;
